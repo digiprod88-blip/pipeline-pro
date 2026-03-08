@@ -47,10 +47,10 @@ export default function Contacts() {
         query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%,company.ilike.%${search}%`);
       }
       if (qualityFilter !== "all") {
-        query = query.eq("quality", qualityFilter);
+        query = query.eq("quality", qualityFilter as "cold" | "warm" | "hot");
       }
       if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
+        query = query.eq("status", statusFilter as "lead" | "customer");
       }
 
       const { data, error } = await query;

@@ -50,7 +50,7 @@ export default function Tasks() {
         .order("due_date", { ascending: true, nullsFirst: false });
 
       if (statusFilter !== "all") {
-        query = query.eq("status", statusFilter);
+        query = query.eq("status", statusFilter as "pending" | "in_progress" | "completed" | "overdue");
       }
       if (search) {
         query = query.ilike("title", `%${search}%`);
