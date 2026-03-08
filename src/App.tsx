@@ -22,6 +22,7 @@ import Shop from "./pages/Shop";
 import Sites from "./pages/Sites";
 import Links from "./pages/Links";
 import ContentLab from "./pages/ContentLab";
+import SmartSegments from "./pages/SmartSegments";
 import ClientPortal from "./pages/portal/ClientPortal";
 import BookingPage from "./pages/BookingPage";
 import NotFound from "./pages/NotFound";
