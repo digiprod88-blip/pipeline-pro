@@ -186,7 +186,7 @@ export default function Contacts() {
           </TableHeader>
           <TableBody>
             {contacts?.map((contact) => (
-              <TableRow key={contact.id}>
+              <TableRow key={contact.id} className="cursor-pointer hover:bg-accent/50" onClick={() => navigate(`/contacts/${contact.id}`)}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
                     <div className={`h-2 w-2 rounded-full ${contact.status === "customer" ? "bg-success" : "bg-destructive"}`} />
