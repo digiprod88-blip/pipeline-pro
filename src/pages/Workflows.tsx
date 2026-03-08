@@ -170,11 +170,28 @@ export default function Workflows() {
                           {ACTION_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                         </SelectContent>
                       </Select>
-                      <div className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <Input type="number" min={0} value={action.delay_minutes} onChange={e => { const a = [...actions]; a[i].delay_minutes = parseInt(e.target.value) || 0; setActions(a); }} className="w-20" />
-                        <span className="text-xs text-muted-foreground">minutes delay</span>
-                      </div>
+                      {action.action_type === "wait" ? (
+                        <div className="flex items-center gap-2 bg-secondary/50 rounded-md p-2">
+                          <Clock className="h-4 w-4 text-warning" />
+                          <span className="text-xs text-muted-foreground">Wait</span>
+                          <Input type="number" min={0} value={action.delay_minutes} onChange={e => { const a = [...actions]; a[i].delay_minutes = parseInt(e.target.value) || 0; setActions(a); }} className="w-20 h-8" />
+                          <Select value={action.action_config?.delay_unit || "minutes"} onValueChange={v => { const a = [...actions]; a[i].action_config = { ...a[i].action_config, delay_unit: v }; if (v === "hours") a[i].delay_minutes = (parseInt(String(a[i].delay_minutes)) || 1) * 60; if (v === "days") a[i].delay_minutes = (parseInt(String(a[i].delay_minutes)) || 1) * 1440; setActions(a); }}>
+                            <SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="minutes">Minutes</SelectItem>
+                              <SelectItem value="hours">Hours</SelectItem>
+                              <SelectItem value="days">Days</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <span className="text-xs text-muted-foreground">before next action</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <Input type="number" min={0} value={action.delay_minutes} onChange={e => { const a = [...actions]; a[i].delay_minutes = parseInt(e.target.value) || 0; setActions(a); }} className="w-20" />
+                          <span className="text-xs text-muted-foreground">minutes delay</span>
+                        </div>
+                      )}
                       {(action.action_type === "send_whatsapp" || action.action_type === "send_email") && (
                         <div className="space-y-2">
                           <div className="flex items-center gap-2">
