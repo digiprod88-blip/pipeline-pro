@@ -58,6 +58,14 @@ const App = () => (
             <Route path="/team" element={<TeamManagement />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
+          <Route
+            path="/portal"
+            element={
+              <ProtectedRoute>
+                <ClientPortal />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
