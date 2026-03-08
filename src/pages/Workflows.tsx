@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Zap, Clock, MessageSquare, Users, Bell, Trash2, Play, AlertCircle, FileText } from "lucide-react";
+import { Plus, Zap, Clock, MessageSquare, Users, Bell, Trash2, Play, AlertCircle, FileText, GitBranch } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -27,23 +27,43 @@ const ACTION_TYPES = [
   { value: "send_whatsapp", label: "Send WhatsApp Message", icon: MessageSquare },
   { value: "send_email", label: "Send Email", icon: MessageSquare },
   { value: "wait", label: "⏳ Wait / Delay", icon: Clock },
+  { value: "condition", label: "🔀 If/Else Branch", icon: GitBranch },
   { value: "add_to_group", label: "Add to Contact Group", icon: Users },
   { value: "remove_from_group", label: "Remove from Group", icon: Users },
   { value: "send_notification", label: "Send Notification", icon: Bell },
   { value: "update_stage", label: "Update Pipeline Stage", icon: Zap },
 ];
 
+const CONDITION_FIELDS = [
+  { value: "lead_score", label: "Lead Score" },
+  { value: "quality", label: "Lead Quality" },
+  { value: "source", label: "Lead Source" },
+  { value: "status", label: "Contact Status" },
+  { value: "value", label: "Deal Value" },
+];
+
+const CONDITION_OPERATORS = [
+  { value: "gt", label: "Greater than" },
+  { value: "lt", label: "Less than" },
+  { value: "eq", label: "Equals" },
+  { value: "neq", label: "Not equals" },
+  { value: "contains", label: "Contains" },
+];
+
+interface WorkflowAction {
+  action_type: string;
+  delay_minutes: number;
+  action_config: any;
+}
+
 export default function Workflows() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [selectedWorkflow, setSelectedWorkflow] = useState<string | null>(null);
   const [showLogs, setShowLogs] = useState<string | null>(null);
 
-  const [form, setForm] = useState({
-    name: "", description: "", trigger_type: "new_lead",
-  });
-  const [actions, setActions] = useState<{ action_type: string; delay_minutes: number; action_config: any }[]>([]);
+  const [form, setForm] = useState({ name: "", description: "", trigger_type: "new_lead" });
+  const [actions, setActions] = useState<WorkflowAction[]>([]);
 
   const { data: templates } = useQuery({
     queryKey: ["message-templates"],
@@ -122,8 +142,111 @@ export default function Workflows() {
     },
   });
 
-  const addAction = () => {
-    setActions([...actions, { action_type: "send_whatsapp", delay_minutes: 0, action_config: {} }]);
+  const updateAction = (index: number, updates: Partial<WorkflowAction>) => {
+    setActions(prev => prev.map((a, i) => i === index ? { ...a, ...updates } : a));
+  };
+
+  const updateActionConfig = (index: number, key: string, value: any) => {
+    setActions(prev => prev.map((a, i) => i === index ? { ...a, action_config: { ...a.action_config, [key]: value } } : a));
+  };
+
+  const renderActionEditor = (action: WorkflowAction, i: number) => {
+    switch (action.action_type) {
+      case "wait":
+        return (
+          <div className="flex items-center gap-2 bg-warning/5 border border-warning/20 rounded-lg p-3">
+            <Clock className="h-4 w-4 text-warning shrink-0" />
+            <span className="text-xs font-medium text-warning">Wait</span>
+            <Input type="number" min={1} value={action.delay_minutes} onChange={e => updateAction(i, { delay_minutes: parseInt(e.target.value) || 0 })} className="w-20 h-8" />
+            <Select value={action.action_config?.delay_unit || "minutes"} onValueChange={v => updateActionConfig(i, "delay_unit", v)}>
+              <SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="minutes">Minutes</SelectItem>
+                <SelectItem value="hours">Hours</SelectItem>
+                <SelectItem value="days">Days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        );
+
+      case "condition":
+        return (
+          <div className="space-y-3 bg-info/5 border border-info/20 rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <GitBranch className="h-4 w-4 text-info shrink-0" />
+              <span className="text-xs font-medium text-info">If/Else Branch</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <Select value={action.action_config?.field || ""} onValueChange={v => updateActionConfig(i, "field", v)}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Field" /></SelectTrigger>
+                <SelectContent>
+                  {CONDITION_FIELDS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={action.action_config?.operator || ""} onValueChange={v => updateActionConfig(i, "operator", v)}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Operator" /></SelectTrigger>
+                <SelectContent>
+                  {CONDITION_OPERATORS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Input className="h-8 text-xs" placeholder="Value" value={action.action_config?.value || ""} onChange={e => updateActionConfig(i, "value", e.target.value)} />
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="p-2 rounded bg-success/5 border border-success/20">
+                <span className="text-success font-medium">✓ TRUE →</span>
+                <p className="text-muted-foreground mt-1">Continue to next action</p>
+              </div>
+              <div className="p-2 rounded bg-destructive/5 border border-destructive/20">
+                <span className="text-destructive font-medium">✗ FALSE →</span>
+                <p className="text-muted-foreground mt-1">Skip to end</p>
+              </div>
+            </div>
+          </div>
+        );
+
+      case "send_whatsapp":
+      case "send_email":
+        return (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              <Select
+                value={action.action_config?.template_id || "custom"}
+                onValueChange={v => {
+                  if (v === "custom") {
+                    updateActionConfig(i, "template_id", undefined);
+                  } else {
+                    const tmpl = templates?.find(t => t.id === v);
+                    setActions(prev => prev.map((a, idx) => idx === i ? { ...a, action_config: { ...a.action_config, template_id: v, message: tmpl?.content || "" } } : a));
+                  }
+                }}
+              >
+                <SelectTrigger className="flex-1 h-8"><SelectValue placeholder="Select template" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="custom">Custom Message</SelectItem>
+                  {templates?.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <Textarea
+              placeholder="Message content..."
+              value={action.action_config?.message || ""}
+              onChange={e => updateActionConfig(i, "message", e.target.value)}
+              rows={2}
+              className="text-sm"
+            />
+          </div>
+        );
+
+      default:
+        return (
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <Input type="number" min={0} value={action.delay_minutes} onChange={e => updateAction(i, { delay_minutes: parseInt(e.target.value) || 0 })} className="w-20 h-8" />
+            <span className="text-xs text-muted-foreground">min delay</span>
+          </div>
+        );
+    }
   };
 
   return (
@@ -131,7 +254,7 @@ export default function Workflows() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Workflows & Automations</h1>
-          <p className="text-muted-foreground text-sm">Automate actions when triggers fire</p>
+          <p className="text-muted-foreground text-sm">Automate actions with triggers, delays, and smart branches</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -152,81 +275,56 @@ export default function Workflows() {
                 </Select>
               </div>
 
+              {/* Action Steps Timeline */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label>Actions</Label>
-                  <Button variant="outline" size="sm" onClick={addAction}><Plus className="h-3 w-3 mr-1" />Add Action</Button>
+                  <Label>Action Steps</Label>
+                  <Button variant="outline" size="sm" onClick={() => setActions([...actions, { action_type: "send_whatsapp", delay_minutes: 0, action_config: {} }])}>
+                    <Plus className="h-3 w-3 mr-1" />Add Step
+                  </Button>
                 </div>
-                {actions.map((action, i) => (
-                  <Card key={i} className="p-3">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">Step {i + 1}</span>
-                        <Button variant="ghost" size="sm" onClick={() => setActions(actions.filter((_, j) => j !== i))}><Trash2 className="h-3 w-3" /></Button>
+
+                {/* Timeline visualization */}
+                <div className="relative">
+                  {actions.map((action, i) => (
+                    <div key={i} className="relative pl-6 pb-3 last:pb-0">
+                      {/* Timeline line */}
+                      {i < actions.length - 1 && (
+                        <div className="absolute left-[11px] top-6 bottom-0 w-[2px] bg-border" />
+                      )}
+                      {/* Timeline dot */}
+                      <div className={`absolute left-0 top-1 h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold
+                        ${action.action_type === "wait" ? "bg-warning/20 text-warning border border-warning/30" : 
+                          action.action_type === "condition" ? "bg-info/20 text-info border border-info/30" : 
+                          "bg-primary/10 text-primary border border-primary/20"}`}
+                      >
+                        {i + 1}
                       </div>
-                      <Select value={action.action_type} onValueChange={v => { const a = [...actions]; a[i].action_type = v; setActions(a); }}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          {ACTION_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      {action.action_type === "wait" ? (
-                        <div className="flex items-center gap-2 bg-secondary/50 rounded-md p-2">
-                          <Clock className="h-4 w-4 text-warning" />
-                          <span className="text-xs text-muted-foreground">Wait</span>
-                          <Input type="number" min={0} value={action.delay_minutes} onChange={e => { const a = [...actions]; a[i].delay_minutes = parseInt(e.target.value) || 0; setActions(a); }} className="w-20 h-8" />
-                          <Select value={action.action_config?.delay_unit || "minutes"} onValueChange={v => { const a = [...actions]; a[i].action_config = { ...a[i].action_config, delay_unit: v }; if (v === "hours") a[i].delay_minutes = (parseInt(String(a[i].delay_minutes)) || 1) * 60; if (v === "days") a[i].delay_minutes = (parseInt(String(a[i].delay_minutes)) || 1) * 1440; setActions(a); }}>
-                            <SelectTrigger className="w-24 h-8"><SelectValue /></SelectTrigger>
+
+                      <Card className="p-3">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground font-medium">Step {i + 1}</span>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setActions(actions.filter((_, j) => j !== i))}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <Select value={action.action_type} onValueChange={v => updateAction(i, { action_type: v })}>
+                            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="minutes">Minutes</SelectItem>
-                              <SelectItem value="hours">Hours</SelectItem>
-                              <SelectItem value="days">Days</SelectItem>
+                              {ACTION_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                             </SelectContent>
                           </Select>
-                          <span className="text-xs text-muted-foreground">before next action</span>
+                          {renderActionEditor(action, i)}
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <Input type="number" min={0} value={action.delay_minutes} onChange={e => { const a = [...actions]; a[i].delay_minutes = parseInt(e.target.value) || 0; setActions(a); }} className="w-20" />
-                          <span className="text-xs text-muted-foreground">minutes delay</span>
-                        </div>
-                      )}
-                      {(action.action_type === "send_whatsapp" || action.action_type === "send_email") && (
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                            <Select
-                              value={action.action_config?.template_id || "custom"}
-                              onValueChange={v => {
-                                const a = [...actions];
-                                if (v === "custom") {
-                                  a[i].action_config = { ...a[i].action_config, template_id: undefined };
-                                } else {
-                                  const tmpl = templates?.find(t => t.id === v);
-                                  a[i].action_config = { ...a[i].action_config, template_id: v, message: tmpl?.content || "" };
-                                }
-                                setActions(a);
-                              }}
-                            >
-                              <SelectTrigger className="flex-1"><SelectValue placeholder="Select template" /></SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="custom">Custom Message</SelectItem>
-                                {templates?.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <Textarea
-                            placeholder="Message content..."
-                            value={action.action_config?.message || ""}
-                            onChange={e => { const a = [...actions]; a[i].action_config = { ...a[i].action_config, message: e.target.value }; setActions(a); }}
-                            rows={2}
-                          />
-                        </div>
-                      )}
+                      </Card>
                     </div>
-                  </Card>
-                ))}
+                  ))}
+                </div>
+
+                {actions.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-3">No steps yet. Add actions to build your automation.</p>
+                )}
               </div>
 
               <Button className="w-full" onClick={() => createWorkflow.mutate()} disabled={!form.name || createWorkflow.isPending}>
@@ -259,7 +357,7 @@ export default function Workflows() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {workflows?.map((wf) => (
-          <Card key={wf.id}>
+          <Card key={wf.id} className="card-elegant">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <CardTitle className="text-base">{wf.name}</CardTitle>
@@ -268,11 +366,12 @@ export default function Workflows() {
               <p className="text-xs text-muted-foreground">{wf.description}</p>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Badge variant={wf.is_active ? "success" : "secondary"}>{wf.is_active ? "Active" : "Inactive"}</Badge>
-                <Badge variant="outline" className="capitalize">{wf.trigger_type.replace("_", " ")}</Badge>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant={wf.is_active ? "success" : "secondary"} className="text-xs">{wf.is_active ? "Active" : "Inactive"}</Badge>
+                <Badge variant="outline" className="capitalize text-xs">
+                  {wf.trigger_type === "group_added" ? "Group Enrollment" : wf.trigger_type.replace(/_/g, " ")}
+                </Badge>
               </div>
-              <Badge variant="outline" className="capitalize text-xs">{wf.trigger_type === "group_added" ? "Group Enrollment" : wf.trigger_type.replace("_", " ")}</Badge>
               <p className="text-xs text-muted-foreground">Created {format(new Date(wf.created_at), "MMM d, yyyy")}</p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => setShowLogs(wf.id)}><Play className="h-3 w-3 mr-1" />Logs</Button>
@@ -285,7 +384,7 @@ export default function Workflows() {
 
       {(!workflows || workflows.length === 0) && (
         <Card className="p-12 text-center">
-          <Zap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <Zap className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
           <h3 className="font-semibold">No workflows yet</h3>
           <p className="text-sm text-muted-foreground mt-1">Create your first automation workflow</p>
         </Card>
