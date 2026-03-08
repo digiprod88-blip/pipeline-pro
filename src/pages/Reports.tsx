@@ -183,20 +183,6 @@ export default function Reports() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 mt-4">
-        </div>
-        <Select value={dateRange} onValueChange={setDateRange}>
-          <SelectTrigger className="w-[150px]">
-            <Calendar className="h-4 w-4 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="7">Last 7 days</SelectItem>
-            <SelectItem value="30">Last 30 days</SelectItem>
-            <SelectItem value="90">Last 90 days</SelectItem>
-            <SelectItem value="365">Last year</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
