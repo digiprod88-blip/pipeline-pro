@@ -11,10 +11,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Globe, Eye, Users, Pencil, Trash2, Copy, Sparkles, PanelRightOpen, PanelRightClose } from "lucide-react";
+import { Plus, Globe, Eye, Users, Pencil, Trash2, Copy, Sparkles, PanelRightOpen, PanelRightClose, LayoutTemplate } from "lucide-react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { AiAssistantSidebar } from "@/components/sites/AiAssistantSidebar";
+import { PageBuilder, type PageBlock } from "@/components/sites/PageBuilder";
 
 export default function Sites() {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export default function Sites() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPage, setEditingPage] = useState<any>(null);
   const [showAi, setShowAi] = useState(false);
+  const [builderPageId, setBuilderPageId] = useState<string | null>(null);
   const [form, setForm] = useState({ title: "", slug: "", description: "", meta_title: "", meta_description: "", template: "blank" });
 
   const { data: pages = [], isLoading } = useQuery({
@@ -70,6 +72,15 @@ export default function Sites() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["landing-pages"] }); toast.success("Status updated"); },
   });
 
+  const saveBlocksMutation = useMutation({
+    mutationFn: async ({ id, blocks }: { id: string; blocks: PageBlock[] }) => {
+      const { error } = await supabase.from("landing_pages").update({ content: blocks as any }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["landing-pages"] }); toast.success("Page blocks saved"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const resetForm = () => setForm({ title: "", slug: "", description: "", meta_title: "", meta_description: "", template: "blank" });
 
   const openEdit = (page: any) => {
@@ -110,6 +121,22 @@ export default function Sites() {
   const totalViews = pages.reduce((s: number, p: any) => s + (p.views_count || 0), 0);
   const totalLeads = pages.reduce((s: number, p: any) => s + (p.leads_count || 0), 0);
   const publishedCount = pages.filter((p: any) => p.is_published).length;
+
+  // Page Builder Mode
+  const builderPage = builderPageId ? pages.find((p: any) => p.id === builderPageId) : null;
+  if (builderPage) {
+    const existingBlocks = Array.isArray(builderPage.content) ? (builderPage.content as unknown as PageBlock[]) : [];
+    return (
+      <PageBuilder
+        pageId={builderPage.id}
+        pageTitle={builderPage.title}
+        initialBlocks={existingBlocks}
+        onSave={(blocks) => saveBlocksMutation.mutate({ id: builderPage.id, blocks })}
+        onBack={() => setBuilderPageId(null)}
+        saving={saveBlocksMutation.isPending}
+      />
+    );
+  }
 
   return (
     <div className="flex h-full">
@@ -210,6 +237,9 @@ export default function Sites() {
                     <div className="flex items-center gap-1 pt-2 border-t border-border">
                       <Switch checked={page.is_published} onCheckedChange={(checked) => togglePublish.mutate({ id: page.id, is_published: checked })} />
                       <span className="text-xs text-muted-foreground ml-1 mr-auto">{page.is_published ? "Live" : "Draft"}</span>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setBuilderPageId(page.id)} title="Open Builder">
+                        <LayoutTemplate className="h-3.5 w-3.5" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => copyUrl(page.slug)}><Copy className="h-3.5 w-3.5" /></Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(page)}><Pencil className="h-3.5 w-3.5" /></Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteMutation.mutate(page.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
