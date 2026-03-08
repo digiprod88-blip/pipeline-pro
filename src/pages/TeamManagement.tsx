@@ -201,6 +201,7 @@ export default function TeamManagement() {
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="staff">Staff</SelectItem>
                           <SelectItem value="viewer">Viewer</SelectItem>
+                          <SelectItem value="client">Client</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>
