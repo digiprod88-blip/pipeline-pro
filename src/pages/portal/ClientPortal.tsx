@@ -296,6 +296,24 @@ export default function ClientPortal() {
                     >
                       {order.status}
                     </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => {
+                        downloadInvoice({
+                          invoiceNumber: (order as any).invoice_number || order.id.slice(0, 8).toUpperCase(),
+                          date: format(new Date(order.created_at), "MMM d, yyyy"),
+                          customerName: `${contact?.first_name} ${contact?.last_name}`,
+                          productName: (order as any).products?.name || "Service",
+                          amount: Number(order.amount),
+                          currency: order.currency,
+                          status: order.status,
+                        });
+                      }}
+                    >
+                      <FileDown className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               ))}
