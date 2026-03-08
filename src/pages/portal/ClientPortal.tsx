@@ -13,6 +13,8 @@ import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import ClientFiles from "@/components/files/ClientFiles";
 import { downloadInvoice } from "@/lib/invoice";
+import { ClientUploads } from "@/components/portal/ClientUploads";
+import { SupportTickets } from "@/components/portal/SupportTickets";
 
 export default function ClientPortal() {
   const { user } = useAuth();
