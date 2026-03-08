@@ -235,6 +235,7 @@ export type Database = {
           first_name: string
           id: string
           last_name: string | null
+          lead_score: number
           notes: string | null
           phone: string | null
           pipeline_id: string | null
@@ -254,6 +255,7 @@ export type Database = {
           first_name: string
           id?: string
           last_name?: string | null
+          lead_score?: number
           notes?: string | null
           phone?: string | null
           pipeline_id?: string | null
@@ -273,6 +275,7 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string | null
+          lead_score?: number
           notes?: string | null
           phone?: string | null
           pipeline_id?: string | null
@@ -998,6 +1001,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_lead_score: { Args: { _contact_id: string }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

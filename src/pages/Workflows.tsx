@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Zap, Clock, MessageSquare, Users, Bell, Trash2, Play, AlertCircle } from "lucide-react";
+import { Plus, Zap, Clock, MessageSquare, Users, Bell, Trash2, Play, AlertCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -42,6 +42,15 @@ export default function Workflows() {
     name: "", description: "", trigger_type: "new_lead",
   });
   const [actions, setActions] = useState<{ action_type: string; delay_minutes: number; action_config: any }[]>([]);
+
+  const { data: templates } = useQuery({
+    queryKey: ["message-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("message_templates").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: workflows } = useQuery({
     queryKey: ["workflows"],
@@ -164,6 +173,38 @@ export default function Workflows() {
                         <Input type="number" min={0} value={action.delay_minutes} onChange={e => { const a = [...actions]; a[i].delay_minutes = parseInt(e.target.value) || 0; setActions(a); }} className="w-20" />
                         <span className="text-xs text-muted-foreground">minutes delay</span>
                       </div>
+                      {(action.action_type === "send_whatsapp" || action.action_type === "send_email") && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <Select
+                              value={action.action_config?.template_id || "custom"}
+                              onValueChange={v => {
+                                const a = [...actions];
+                                if (v === "custom") {
+                                  a[i].action_config = { ...a[i].action_config, template_id: undefined };
+                                } else {
+                                  const tmpl = templates?.find(t => t.id === v);
+                                  a[i].action_config = { ...a[i].action_config, template_id: v, message: tmpl?.content || "" };
+                                }
+                                setActions(a);
+                              }}
+                            >
+                              <SelectTrigger className="flex-1"><SelectValue placeholder="Select template" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="custom">Custom Message</SelectItem>
+                                {templates?.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Textarea
+                            placeholder="Message content..."
+                            value={action.action_config?.message || ""}
+                            onChange={e => { const a = [...actions]; a[i].action_config = { ...a[i].action_config, message: e.target.value }; setActions(a); }}
+                            rows={2}
+                          />
+                        </div>
+                      )}
                     </div>
                   </Card>
                 ))}
