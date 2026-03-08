@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import { format } from "date-fns";
 export default function Contacts() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [qualityFilter, setQualityFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -185,7 +187,7 @@ export default function Contacts() {
           </TableHeader>
           <TableBody>
             {contacts?.map((contact) => (
-              <TableRow key={contact.id}>
+              <TableRow key={contact.id} className="cursor-pointer hover:bg-accent/50" onClick={() => navigate(`/contacts/${contact.id}`)}>
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
                     <div className={`h-2 w-2 rounded-full ${contact.status === "customer" ? "bg-success" : "bg-destructive"}`} />

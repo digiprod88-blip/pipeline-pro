@@ -325,21 +325,75 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          hide_phone: boolean
           id: string
+          pipeline_access: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          hide_phone?: boolean
           id?: string
+          pipeline_access?: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          hide_phone?: boolean
           id?: string
+          pipeline_access?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
         Relationships: []
+      }
+      webhook_keys: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          key: string
+          name: string
+          pipeline_id: string | null
+          stage_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key?: string
+          name: string
+          pipeline_id?: string | null
+          stage_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key?: string
+          name?: string
+          pipeline_id?: string | null
+          stage_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_keys_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "pipelines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_keys_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

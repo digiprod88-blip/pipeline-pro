@@ -7,6 +7,8 @@ import {
   Settings,
   LogOut,
   Search,
+  UserCog,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -19,6 +21,8 @@ const navItems = [
   { label: "Pipeline", icon: Kanban, path: "/pipeline" },
   { label: "Contacts", icon: Users, path: "/contacts" },
   { label: "Tasks", icon: CheckSquare, path: "/tasks" },
+  { label: "Reports", icon: BarChart3, path: "/reports" },
+  { label: "Team", icon: UserCog, path: "/team" },
   { label: "Settings", icon: Settings, path: "/settings" },
 ];
 
@@ -52,7 +56,7 @@ export function AppSidebar() {
 
       <nav className="flex-1 space-y-0.5 px-3">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + "/");
           return (
             <Link
               key={item.path}
