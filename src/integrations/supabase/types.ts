@@ -138,6 +138,45 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       booking_slots: {
         Row: {
           day_of_week: number
@@ -602,6 +641,89 @@ export type Database = {
           },
         ]
       }
+      lms_enrollments: {
+        Row: {
+          certificate_url: string | null
+          completed_at: string | null
+          contact_id: string
+          course_id: string | null
+          course_name: string
+          created_at: string
+          enrolled_at: string
+          id: string
+          metadata: Json | null
+          progress_percent: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          certificate_url?: string | null
+          completed_at?: string | null
+          contact_id: string
+          course_id?: string | null
+          course_name: string
+          created_at?: string
+          enrolled_at?: string
+          id?: string
+          metadata?: Json | null
+          progress_percent?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          certificate_url?: string | null
+          completed_at?: string | null
+          contact_id?: string
+          course_id?: string | null
+          course_name?: string
+          created_at?: string
+          enrolled_at?: string
+          id?: string
+          metadata?: Json | null
+          progress_percent?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lms_enrollments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      login_history: {
+        Row: {
+          created_at: string
+          device_info: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       manifestation_goals: {
         Row: {
           completed_days: number[] | null
@@ -1011,6 +1133,59 @@ export type Database = {
             columns: ["referrer_contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_posts: {
+        Row: {
+          content: string
+          content_library_id: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          metadata: Json | null
+          platforms: string[]
+          published_at: string | null
+          scheduled_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          content_library_id?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          metadata?: Json | null
+          platforms?: string[]
+          published_at?: string | null
+          scheduled_at: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          content_library_id?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          metadata?: Json | null
+          platforms?: string[]
+          published_at?: string | null
+          scheduled_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_posts_content_library_id_fkey"
+            columns: ["content_library_id"]
+            isOneToOne: false
+            referencedRelation: "content_library"
             referencedColumns: ["id"]
           },
         ]

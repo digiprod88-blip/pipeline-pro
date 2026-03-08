@@ -23,6 +23,8 @@ import Sites from "./pages/Sites";
 import Links from "./pages/Links";
 import ContentLab from "./pages/ContentLab";
 import SmartSegments from "./pages/SmartSegments";
+import SocialScheduler from "./pages/SocialScheduler";
+import AuditLogs from "./pages/AuditLogs";
 import ClientPortal from "./pages/portal/ClientPortal";
 import BookingPage from "./pages/BookingPage";
 import NotFound from "./pages/NotFound";
@@ -60,6 +62,8 @@ const App = () => (
             <Route path="/links" element={<Links />} />
             <Route path="/content-lab" element={<ContentLab />} />
             <Route path="/segments" element={<SmartSegments />} />
+            <Route path="/social" element={<SocialScheduler />} />
+            <Route path="/audit" element={<AuditLogs />} />
             <Route path="/team" element={<TeamManagement />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
