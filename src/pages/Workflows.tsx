@@ -272,6 +272,7 @@ export default function Workflows() {
                 <Badge variant={wf.is_active ? "success" : "secondary"}>{wf.is_active ? "Active" : "Inactive"}</Badge>
                 <Badge variant="outline" className="capitalize">{wf.trigger_type.replace("_", " ")}</Badge>
               </div>
+              <Badge variant="outline" className="capitalize text-xs">{wf.trigger_type === "group_added" ? "Group Enrollment" : wf.trigger_type.replace("_", " ")}</Badge>
               <p className="text-xs text-muted-foreground">Created {format(new Date(wf.created_at), "MMM d, yyyy")}</p>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => setShowLogs(wf.id)}><Play className="h-3 w-3 mr-1" />Logs</Button>
