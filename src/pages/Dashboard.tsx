@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import HotLeadsWidget from "@/components/dashboard/HotLeadsWidget";
 import LeadScoreBadge from "@/components/dashboard/LeadScoreBadge";
+import TeamLeaderboard from "@/components/dashboard/TeamLeaderboard";
 
 function StatCard({ title, value, icon: Icon, description, delay = 0 }: {
   title: string; value: string | number; icon: React.ElementType; description?: string; delay?: number;
