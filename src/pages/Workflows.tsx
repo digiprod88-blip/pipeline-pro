@@ -44,6 +44,15 @@ export default function Workflows() {
   });
   const [actions, setActions] = useState<{ action_type: string; delay_minutes: number; action_config: any }[]>([]);
 
+  const { data: templates } = useQuery({
+    queryKey: ["message-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("message_templates").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data: workflows } = useQuery({
     queryKey: ["workflows"],
     queryFn: async () => {
