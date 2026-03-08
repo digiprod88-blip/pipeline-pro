@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CheckCircle2, Clock, DollarSign, MessageSquare, LogOut, User,
-  ArrowRight, FileText, FileDown, Target, GraduationCap,
+  ArrowRight, FileText, FileDown, Target, GraduationCap, Gift, BookOpen,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
