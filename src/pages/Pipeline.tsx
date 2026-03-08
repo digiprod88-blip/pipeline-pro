@@ -222,11 +222,24 @@ export default function Pipeline() {
           <h1 className="text-2xl font-semibold">Pipeline</h1>
           <p className="text-sm text-muted-foreground">Drag leads across stages</p>
         </div>
-        <Button onClick={() => { setSelectedStageId(stages?.[0]?.id ?? null); setDialogOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Lead
-        </Button>
-      </div>
+        <div className="flex items-center gap-3">
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+            <SelectTrigger className="w-[160px]">
+              <ArrowUpDown className="h-3.5 w-3.5 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="score_desc">Score ↓</SelectItem>
+              <SelectItem value="score_asc">Score ↑</SelectItem>
+              <SelectItem value="value_desc">Value ↓</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={() => { setSelectedStageId(stages?.[0]?.id ?? null); setDialogOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Lead
+          </Button>
+        </div>
 
       <DndContext
         sensors={sensors}
