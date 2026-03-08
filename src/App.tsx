@@ -15,6 +15,10 @@ import Tasks from "./pages/Tasks";
 import Settings from "./pages/Settings";
 import TeamManagement from "./pages/TeamManagement";
 import Reports from "./pages/Reports";
+import Workflows from "./pages/Workflows";
+import CalendarPage from "./pages/CalendarPage";
+import CallManagement from "./pages/CallManagement";
+import Shop from "./pages/Shop";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +46,10 @@ const App = () => (
             <Route path="/groups" element={<ContactGroups />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/workflows" element={<Workflows />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/calls" element={<CallManagement />} />
+            <Route path="/shop" element={<Shop />} />
             <Route path="/team" element={<TeamManagement />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
