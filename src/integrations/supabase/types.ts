@@ -525,6 +525,56 @@ export type Database = {
           },
         ]
       }
+      manifestation_goals: {
+        Row: {
+          completed_days: number[] | null
+          contact_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          start_date: string
+          status: string
+          target_days: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_days?: number[] | null
+          contact_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          start_date?: string
+          status?: string
+          target_days?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_days?: number[] | null
+          contact_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          start_date?: string
+          status?: string
+          target_days?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manifestation_goals_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_templates: {
         Row: {
           channel: string
