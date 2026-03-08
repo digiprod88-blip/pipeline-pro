@@ -12,6 +12,8 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell,
 } from "recharts";
+import HotLeadsWidget from "@/components/dashboard/HotLeadsWidget";
+import LeadScoreBadge from "@/components/dashboard/LeadScoreBadge";
 
 function StatCard({ title, value, icon: Icon, description, delay = 0 }: {
   title: string; value: string | number; icon: React.ElementType; description?: string; delay?: number;
