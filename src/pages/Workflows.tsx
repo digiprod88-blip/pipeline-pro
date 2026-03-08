@@ -20,6 +20,7 @@ const TRIGGER_TYPES = [
   { value: "stage_change", label: "Pipeline Stage Changed", icon: Zap },
   { value: "webhook", label: "Webhook Received", icon: Zap },
   { value: "form_submit", label: "Form Submitted", icon: Zap },
+  { value: "group_added", label: "Added to Contact Group", icon: Users },
 ];
 
 const ACTION_TYPES = [
