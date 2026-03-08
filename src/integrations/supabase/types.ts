@@ -52,6 +52,42 @@ export type Database = {
           },
         ]
       }
+      ad_spend: {
+        Row: {
+          amount: number
+          campaign_name: string | null
+          created_at: string
+          currency: string
+          date: string
+          id: string
+          notes: string | null
+          platform: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          campaign_name?: string | null
+          created_at?: string
+          currency?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          platform?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          campaign_name?: string | null
+          created_at?: string
+          currency?: string
+          date?: string
+          id?: string
+          notes?: string | null
+          platform?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       appointments: {
         Row: {
           contact_id: string | null
@@ -345,6 +381,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      content_library: {
+        Row: {
+          content: Json
+          content_type: string
+          created_at: string
+          id: string
+          tags: string[] | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json
+          content_type?: string
+          created_at?: string
+          id?: string
+          tags?: string[] | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          content_type?: string
+          created_at?: string
+          id?: string
+          tags?: string[] | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       landing_pages: {
         Row: {
@@ -813,6 +879,42 @@ export type Database = {
           utm_content?: string | null
           utm_medium?: string | null
           utm_source?: string | null
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          contact_id: string
+          created_at: string
+          id: string
+          message: string
+          priority: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string
+          id?: string
+          message: string
+          priority?: string
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          priority?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
