@@ -30,6 +30,7 @@ import { format } from "date-fns";
 export default function Contacts() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [qualityFilter, setQualityFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
