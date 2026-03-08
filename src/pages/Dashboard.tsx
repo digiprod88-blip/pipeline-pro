@@ -160,6 +160,9 @@ export default function Dashboard() {
         </motion.div>
       </div>
 
+      {/* Priority Leads */}
+      <HotLeadsWidget />
+
       {/* Follow-ups & Recent Leads */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
