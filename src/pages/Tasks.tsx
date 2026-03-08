@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { format, isPast, isFuture, isToday } from "date-fns";
 import { motion } from "framer-motion";
+import TaskComments from "@/components/tasks/TaskComments";
 
 export default function Tasks() {
   const { user } = useAuth();
