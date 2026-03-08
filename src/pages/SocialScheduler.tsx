@@ -92,6 +92,23 @@ export default function SocialScheduler() {
     },
   });
 
+  const publishNow = useMutation({
+    mutationFn: async (postId: string) => {
+      const { data, error } = await supabase.functions.invoke("social-publish", {
+        body: { post_id: postId },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["scheduled-posts"] });
+      const results = data?.results || {};
+      const summary = Object.entries(results).map(([k, v]: any) => `${k}: ${v.success ? "✓" : v.message}`).join(", ");
+      toast.success(`Publish result: ${summary}`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   const togglePlatform = (platform: string) => {
     setForm(prev => ({
       ...prev,
