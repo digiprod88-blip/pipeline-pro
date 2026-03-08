@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Kanban, CheckSquare, Settings, LogOut,
-  Search, UserCog, BarChart3, FolderOpen, Zap, CalendarDays, Phone, ShoppingCart, Globe, Link2, Sparkles,
+  Search, UserCog, BarChart3, FolderOpen, Zap, CalendarDays, Phone, ShoppingCart, Globe, Link2, Sparkles, Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ const navItems = [
   { label: "Sites", icon: Globe, path: "/sites" },
   { label: "Links", icon: Link2, path: "/links" },
   { label: "Content Lab", icon: Sparkles, path: "/content-lab" },
+  { label: "Segments", icon: Target, path: "/segments" },
   { label: "Reports", icon: BarChart3, path: "/reports" },
   { label: "Team", icon: UserCog, path: "/team" },
   { label: "Settings", icon: Settings, path: "/settings" },

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CheckCircle2, Clock, DollarSign, MessageSquare, LogOut, User,
-  ArrowRight, FileText, FileDown, Target, GraduationCap,
+  ArrowRight, FileText, FileDown, Target, GraduationCap, Gift, BookOpen,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +17,8 @@ import { ClientUploads } from "@/components/portal/ClientUploads";
 import { SupportTickets } from "@/components/portal/SupportTickets";
 import { GrowthHub } from "@/components/portal/GrowthHub";
 import { LearningJourney } from "@/components/portal/LearningJourney";
+import { ReferralHub } from "@/components/portal/ReferralHub";
+import { JournalVisionBoard } from "@/components/portal/JournalVisionBoard";
 
 export default function ClientPortal() {
   const { user } = useAuth();
@@ -203,6 +205,12 @@ export default function ClientPortal() {
             <TabsTrigger value="learning" className="text-xs">
               <GraduationCap className="h-3.5 w-3.5 mr-1" /> My Learning
             </TabsTrigger>
+            <TabsTrigger value="journal" className="text-xs">
+              <BookOpen className="h-3.5 w-3.5 mr-1" /> Journal
+            </TabsTrigger>
+            <TabsTrigger value="referrals" className="text-xs">
+              <Gift className="h-3.5 w-3.5 mr-1" /> Referrals
+            </TabsTrigger>
             <TabsTrigger value="files" className="text-xs">Files</TabsTrigger>
             <TabsTrigger value="support" className="text-xs">Support</TabsTrigger>
           </TabsList>
@@ -350,6 +358,14 @@ export default function ClientPortal() {
           <TabsContent value="files" className="space-y-6">
             <ClientUploads contactId={contactId!} />
             <ClientFiles contactId={contactId!} readOnly />
+          </TabsContent>
+
+          <TabsContent value="journal">
+            <JournalVisionBoard contactId={contactId!} />
+          </TabsContent>
+
+          <TabsContent value="referrals">
+            <ReferralHub contactId={contactId!} />
           </TabsContent>
 
           <TabsContent value="support">

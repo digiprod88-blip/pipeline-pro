@@ -250,6 +250,50 @@ export type Database = {
           },
         ]
       }
+      client_journals: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          entry_date: string
+          gratitudes: string | null
+          id: string
+          intentions: string | null
+          reflections: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string
+          entry_date?: string
+          gratitudes?: string | null
+          id?: string
+          intentions?: string | null
+          reflections?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          entry_date?: string
+          gratitudes?: string | null
+          id?: string
+          intentions?: string | null
+          reflections?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_journals_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_group_members: {
         Row: {
           contact_id: string
@@ -408,6 +452,39 @@ export type Database = {
           id?: string
           tags?: string[] | null
           title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      dynamic_segments: {
+        Row: {
+          auto_tag: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          rules: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_tag?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          rules?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_tag?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          rules?: Json
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -884,6 +961,60 @@ export type Database = {
           },
         ]
       }
+      referrals: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          id: string
+          referral_code: string
+          referred_contact_id: string | null
+          referred_email: string | null
+          referred_name: string | null
+          referrer_contact_id: string
+          reward_credits: number
+          status: string
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_contact_id?: string | null
+          referred_email?: string | null
+          referred_name?: string | null
+          referrer_contact_id: string
+          reward_credits?: number
+          status?: string
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_contact_id?: string | null
+          referred_email?: string | null
+          referred_name?: string | null
+          referrer_contact_id?: string
+          reward_credits?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_contact_id_fkey"
+            columns: ["referred_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_contact_id_fkey"
+            columns: ["referrer_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       short_links: {
         Row: {
           clicks_count: number
@@ -1079,6 +1210,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      vision_board_images: {
+        Row: {
+          caption: string | null
+          contact_id: string | null
+          created_at: string
+          id: string
+          image_url: string
+          position: number
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          image_url: string
+          position?: number
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          contact_id?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          position?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vision_board_images_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       webhook_keys: {
         Row: {
