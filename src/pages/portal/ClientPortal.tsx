@@ -323,6 +323,12 @@ export default function ClientPortal() {
           </CardContent>
         </Card>
 
+        {/* Client Uploads */}
+        <ClientUploads contactId={contactId!} />
+
+        {/* Support Tickets */}
+        <SupportTickets contactId={contactId!} />
+
         {/* Shared Files */}
         <ClientFiles contactId={contactId!} readOnly />
       </main>

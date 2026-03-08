@@ -376,6 +376,8 @@ export default function Reports() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </TabsContent>
+      </Tabs>
     </div>
   );
 }

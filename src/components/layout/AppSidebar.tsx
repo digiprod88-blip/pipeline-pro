@@ -21,6 +21,7 @@ const navItems = [
   { label: "Shop", icon: ShoppingCart, path: "/shop" },
   { label: "Sites", icon: Globe, path: "/sites" },
   { label: "Links", icon: Link2, path: "/links" },
+  { label: "Content Lab", icon: Sparkles, path: "/content-lab" },
   { label: "Reports", icon: BarChart3, path: "/reports" },
   { label: "Team", icon: UserCog, path: "/team" },
   { label: "Settings", icon: Settings, path: "/settings" },
