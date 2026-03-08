@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Mail, Phone, Building, Calendar, DollarSign, Tag } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Building, Calendar, DollarSign, Tag, TrendingUp, MessageSquare, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { UnifiedInbox } from "@/components/contacts/UnifiedInbox";
 import { ContactTimeline } from "@/components/contacts/ContactTimeline";
+import LeadScoreBadge from "@/components/dashboard/LeadScoreBadge";
 
 export default function ContactDetail() {
   const { id } = useParams<{ id: string }>();
