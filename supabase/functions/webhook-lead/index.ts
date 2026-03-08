@@ -20,11 +20,10 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const pathParts = url.pathname.split("/");
-    const webhookKey = pathParts[pathParts.length - 1];
+    const webhookKey = url.searchParams.get("key");
 
     if (!webhookKey) {
-      return new Response(JSON.stringify({ error: "Missing webhook key" }), {
+      return new Response(JSON.stringify({ error: "Missing webhook key. Pass ?key=YOUR_KEY" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
