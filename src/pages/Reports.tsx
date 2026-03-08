@@ -298,6 +298,13 @@ export default function Reports() {
           </CardContent>
         </Card>
       </div>
+      </TabsContent>
+
+      <TabsContent value="roi" className="mt-4">
+        <ROIDashboard dateRange={dateRange} />
+      </TabsContent>
+
+      <TabsContent value="webhooks" className="space-y-6 mt-4">
 
       {/* Webhook Keys Section */}
       <Card>
