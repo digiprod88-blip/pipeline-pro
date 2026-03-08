@@ -99,6 +99,7 @@ export default function Tasks() {
       setPriority("medium");
       setDueDate("");
       setContactId("");
+      setVisibleToClient(false);
       toast.success("Task created");
     },
     onError: (e) => toast.error(e.message),
