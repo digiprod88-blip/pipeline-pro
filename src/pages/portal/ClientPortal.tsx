@@ -17,6 +17,8 @@ import { ClientUploads } from "@/components/portal/ClientUploads";
 import { SupportTickets } from "@/components/portal/SupportTickets";
 import { GrowthHub } from "@/components/portal/GrowthHub";
 import { LearningJourney } from "@/components/portal/LearningJourney";
+import { ReferralHub } from "@/components/portal/ReferralHub";
+import { JournalVisionBoard } from "@/components/portal/JournalVisionBoard";
 
 export default function ClientPortal() {
   const { user } = useAuth();
