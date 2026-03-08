@@ -11,9 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Zap, Clock, MessageSquare, Users, Bell, Trash2, Play, AlertCircle } from "lucide-react";
+import { Plus, Zap, Clock, MessageSquare, Users, Bell, Trash2, Play, AlertCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Textarea } from "@/components/ui/textarea";
 
 const TRIGGER_TYPES = [
   { value: "new_lead", label: "New Lead Added", icon: Users },
