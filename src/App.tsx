@@ -19,6 +19,8 @@ import Workflows from "./pages/Workflows";
 import CalendarPage from "./pages/CalendarPage";
 import CallManagement from "./pages/CallManagement";
 import Shop from "./pages/Shop";
+import Sites from "./pages/Sites";
+import Links from "./pages/Links";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
