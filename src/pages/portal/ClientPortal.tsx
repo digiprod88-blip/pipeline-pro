@@ -4,10 +4,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CheckCircle2, Clock, DollarSign, MessageSquare, LogOut, User,
-  ArrowRight, FileText, FileDown,
+  ArrowRight, FileText, FileDown, Target, GraduationCap,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +15,8 @@ import ClientFiles from "@/components/files/ClientFiles";
 import { downloadInvoice } from "@/lib/invoice";
 import { ClientUploads } from "@/components/portal/ClientUploads";
 import { SupportTickets } from "@/components/portal/SupportTickets";
+import { GrowthHub } from "@/components/portal/GrowthHub";
+import { LearningJourney } from "@/components/portal/LearningJourney";
 
 export default function ClientPortal() {
   const { user } = useAuth();
