@@ -250,7 +250,7 @@ export default function TeamManagement() {
       <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Invite Staff Member</DialogTitle>
+            <DialogTitle>{inviteAsClient ? "Invite Client" : "Invite Staff Member"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
