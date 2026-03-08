@@ -683,6 +683,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          client_contact_id: string | null
           created_at: string
           full_name: string | null
           id: string
@@ -691,6 +692,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          client_contact_id?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
@@ -699,13 +701,22 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          client_contact_id?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_client_contact_id_fkey"
+            columns: ["client_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       short_links: {
         Row: {
@@ -769,6 +780,7 @@ export type Database = {
           title: string
           updated_at: string
           user_id: string
+          visible_to_client: boolean
         }
         Insert: {
           assigned_to?: string | null
@@ -783,6 +795,7 @@ export type Database = {
           title: string
           updated_at?: string
           user_id: string
+          visible_to_client?: boolean
         }
         Update: {
           assigned_to?: string | null
@@ -797,6 +810,7 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+          visible_to_client?: boolean
         }
         Relationships: [
           {
@@ -1011,7 +1025,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "staff" | "viewer"
+      app_role: "admin" | "staff" | "viewer" | "client"
       lead_quality: "cold" | "warm" | "hot"
       lead_status: "lead" | "customer"
       task_priority: "low" | "medium" | "high"
@@ -1143,7 +1157,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "staff", "viewer"],
+      app_role: ["admin", "staff", "viewer", "client"],
       lead_quality: ["cold", "warm", "hot"],
       lead_status: ["lead", "customer"],
       task_priority: ["low", "medium", "high"],
