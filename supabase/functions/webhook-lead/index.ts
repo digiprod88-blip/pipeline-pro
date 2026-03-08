@@ -1,0 +1,121 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  try {
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split("/");
+    const webhookKey = pathParts[pathParts.length - 1];
+
+    if (!webhookKey) {
+      return new Response(JSON.stringify({ error: "Missing webhook key" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Missing Supabase configuration");
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Validate webhook key
+    const { data: webhook, error: webhookError } = await supabase
+      .from("webhook_keys")
+      .select("*, pipelines(id), pipeline_stages(id)")
+      .eq("key", webhookKey)
+      .eq("is_active", true)
+      .single();
+
+    if (webhookError || !webhook) {
+      return new Response(JSON.stringify({ error: "Invalid or inactive webhook key" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const body = await req.json();
+    const { name, first_name, last_name, email, phone, source, company, value } = body;
+
+    const contactFirstName = first_name || name?.split(" ")[0] || "Unknown";
+    const contactLastName = last_name || (name?.split(" ").slice(1).join(" ") || null);
+
+    // Get first stage of the pipeline
+    let stageId = webhook.stage_id;
+    if (!stageId && webhook.pipeline_id) {
+      const { data: firstStage } = await supabase
+        .from("pipeline_stages")
+        .select("id")
+        .eq("pipeline_id", webhook.pipeline_id)
+        .order("position", { ascending: true })
+        .limit(1)
+        .single();
+      stageId = firstStage?.id || null;
+    }
+
+    // Create the contact
+    const { data: contact, error: contactError } = await supabase
+      .from("contacts")
+      .insert({
+        user_id: webhook.user_id,
+        first_name: contactFirstName,
+        last_name: contactLastName,
+        email: email || null,
+        phone: phone || null,
+        company: company || null,
+        source: source || "webhook",
+        value: value ? parseFloat(value) : 0,
+        pipeline_id: webhook.pipeline_id,
+        stage_id: stageId,
+      })
+      .select()
+      .single();
+
+    if (contactError) {
+      throw new Error(`Failed to create contact: ${contactError.message}`);
+    }
+
+    // Log activity
+    await supabase.from("activities").insert({
+      user_id: webhook.user_id,
+      contact_id: contact.id,
+      type: "webhook",
+      description: `Lead captured via webhook "${webhook.name}"`,
+      metadata: { source: source || "webhook", webhook_name: webhook.name },
+    });
+
+    return new Response(
+      JSON.stringify({ success: true, contact_id: contact.id }),
+      {
+        status: 201,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  } catch (error: unknown) {
+    console.error("Webhook error:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return new Response(JSON.stringify({ error: message }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
