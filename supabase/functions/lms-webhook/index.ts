@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -16,33 +16,63 @@ serve(async (req) => {
     );
 
     const body = await req.json();
-    const { event, contact_id, course_name, course_id, progress_percent, certificate_url } = body;
+    const { event, contact_id, user_email, course_name, course_id, progress_percent, certificate_url } = body;
 
-    if (!contact_id || !course_name) {
-      return new Response(JSON.stringify({ error: "contact_id and course_name required" }), {
+    // Resolve contact_id from user_email if not provided
+    let resolvedContactId = contact_id;
+    if (!resolvedContactId && user_email) {
+      const { data: contact } = await supabase
+        .from("contacts")
+        .select("id")
+        .eq("email", user_email)
+        .maybeSingle();
+      if (contact) {
+        resolvedContactId = contact.id;
+      } else {
+        return new Response(JSON.stringify({ error: "No contact found for email: " + user_email }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    if (!resolvedContactId || !course_name) {
+      return new Response(JSON.stringify({ error: "contact_id (or user_email) and course_name required" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Get contact owner for notifications
+    const { data: contactData } = await supabase
+      .from("contacts")
+      .select("user_id, lead_score, first_name, last_name")
+      .eq("id", resolvedContactId)
+      .single();
+
     if (event === "course_purchased" || event === "course_enrolled") {
-      // Create enrollment
       const { data: enrollment, error } = await supabase.from("lms_enrollments").insert({
-        contact_id, course_name, course_id: course_id || null, status: "enrolled",
+        contact_id: resolvedContactId, course_name, course_id: course_id || null, status: "enrolled",
       }).select().single();
       if (error) throw error;
 
       // Boost lead score by 50
-      const { data: contact } = await supabase.from("contacts").select("lead_score").eq("id", contact_id).single();
-      if (contact) {
-        await supabase.from("contacts").update({ lead_score: (contact.lead_score || 0) + 50 }).eq("id", contact_id);
-      }
+      if (contactData) {
+        await supabase.from("contacts")
+          .update({ lead_score: (contactData.lead_score || 0) + 50 })
+          .eq("id", resolvedContactId);
 
-      // Log activity
-      const { data: owners } = await supabase.from("contacts").select("user_id").eq("id", contact_id).single();
-      if (owners) {
+        // Log activity
         await supabase.from("activities").insert({
-          user_id: owners.user_id, contact_id, type: "lms_enrollment",
+          user_id: contactData.user_id, contact_id: resolvedContactId, type: "lms_enrollment",
           description: `Enrolled in course: ${course_name}`,
+        });
+
+        // Notify admin
+        await supabase.from("notifications").insert({
+          user_id: contactData.user_id,
+          title: "📚 New LMS Enrollment",
+          message: `${contactData.first_name || ""} ${contactData.last_name || ""} enrolled in "${course_name}". Lead score +50.`,
+          type: "info",
+          link: `/contacts/${resolvedContactId}`,
         });
       }
 
@@ -54,7 +84,7 @@ serve(async (req) => {
     if (event === "lesson_completed") {
       const { error } = await supabase.from("lms_enrollments")
         .update({ progress_percent: progress_percent || 0, updated_at: new Date().toISOString() })
-        .eq("contact_id", contact_id)
+        .eq("contact_id", resolvedContactId)
         .eq("course_name", course_name);
       if (error) throw error;
 
@@ -70,14 +100,24 @@ serve(async (req) => {
           completed_at: new Date().toISOString(),
           certificate_url: certificate_url || null,
         })
-        .eq("contact_id", contact_id)
+        .eq("contact_id", resolvedContactId)
         .eq("course_name", course_name);
       if (error) throw error;
 
-      // Additional +25 score for completion
-      const { data: contact } = await supabase.from("contacts").select("lead_score").eq("id", contact_id).single();
-      if (contact) {
-        await supabase.from("contacts").update({ lead_score: (contact.lead_score || 0) + 25 }).eq("id", contact_id);
+      // +25 score for completion
+      if (contactData) {
+        await supabase.from("contacts")
+          .update({ lead_score: (contactData.lead_score || 0) + 25 })
+          .eq("id", resolvedContactId);
+
+        // Notify admin
+        await supabase.from("notifications").insert({
+          user_id: contactData.user_id,
+          title: "🎓 Course Completed!",
+          message: `${contactData.first_name || ""} ${contactData.last_name || ""} completed "${course_name}". Lead score +25.`,
+          type: "info",
+          link: `/contacts/${resolvedContactId}`,
+        });
       }
 
       return new Response(JSON.stringify({ success: true }), {
@@ -85,7 +125,7 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ error: "Unknown event type" }), {
+    return new Response(JSON.stringify({ error: "Unknown event type. Supported: course_purchased, course_enrolled, lesson_completed, course_completed" }), {
       status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {

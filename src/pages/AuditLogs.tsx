@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -74,12 +75,12 @@ export default function AuditLogs() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <h1 className="text-2xl font-semibold flex items-center gap-2">
           <Shield className="h-6 w-6 text-primary" /> Security & Audit Logs
         </h1>
         <p className="text-muted-foreground text-sm">Track all system changes and login activity</p>
-      </div>
+      </motion.div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Audit Logs */}
