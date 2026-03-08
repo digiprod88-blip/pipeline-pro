@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import ClientFiles from "@/components/files/ClientFiles";
 
 export default function ClientPortal() {
   const { user } = useAuth();
