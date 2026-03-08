@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +21,7 @@ import { format, subDays, isAfter, startOfWeek } from "date-fns";
 import { motion } from "framer-motion";
 import { ConversionFunnel } from "@/components/reports/ConversionFunnel";
 import { RevenueChart } from "@/components/reports/RevenueChart";
+import { ROIDashboard } from "@/components/reports/ROIDashboard";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--info))", "hsl(var(--warning))", "hsl(var(--success))", "hsl(var(--destructive))", "hsl(var(--accent-foreground))"];
 
@@ -157,7 +159,7 @@ export default function Reports() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Reports & Analytics</h1>
-          <p className="text-sm text-muted-foreground">In-depth analytics and API integrations</p>
+          <p className="text-sm text-muted-foreground">In-depth analytics, ROI tracking & API integrations</p>
         </div>
         <Select value={dateRange} onValueChange={setDateRange}>
           <SelectTrigger className="w-[150px]">
@@ -172,6 +174,15 @@ export default function Reports() {
           </SelectContent>
         </Select>
       </div>
+
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="roi">ROI Analytics</TabsTrigger>
+          <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6 mt-4">
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -273,6 +284,13 @@ export default function Reports() {
           </CardContent>
         </Card>
       </div>
+      </TabsContent>
+
+      <TabsContent value="roi" className="mt-4">
+        <ROIDashboard dateRange={dateRange} />
+      </TabsContent>
+
+      <TabsContent value="webhooks" className="space-y-6 mt-4">
 
       {/* Webhook Keys Section */}
       <Card>
@@ -344,6 +362,8 @@ export default function Reports() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </TabsContent>
+      </Tabs>
     </div>
   );
 }

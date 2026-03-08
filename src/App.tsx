@@ -21,6 +21,7 @@ import CallManagement from "./pages/CallManagement";
 import Shop from "./pages/Shop";
 import Sites from "./pages/Sites";
 import Links from "./pages/Links";
+import ContentLab from "./pages/ContentLab";
 import ClientPortal from "./pages/portal/ClientPortal";
 import BookingPage from "./pages/BookingPage";
 import NotFound from "./pages/NotFound";
@@ -56,6 +57,7 @@ const App = () => (
             <Route path="/shop" element={<Shop />} />
             <Route path="/sites" element={<Sites />} />
             <Route path="/links" element={<Links />} />
+            <Route path="/content-lab" element={<ContentLab />} />
             <Route path="/team" element={<TeamManagement />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
