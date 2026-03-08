@@ -35,6 +35,8 @@ const ACTION_TYPES = [
   { value: "remove_from_group", label: "Remove from Group", icon: Users },
   { value: "send_notification", label: "Send Notification", icon: Bell },
   { value: "update_stage", label: "Update Pipeline Stage", icon: Zap },
+  { value: "move_to_vip", label: "⭐ Move to VIP Stage", icon: Zap },
+  { value: "boost_score", label: "📈 Boost Lead Score", icon: Zap },
 ];
 
 const CONDITION_FIELDS = [
