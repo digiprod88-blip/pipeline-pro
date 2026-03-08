@@ -22,6 +22,7 @@ import Shop from "./pages/Shop";
 import Sites from "./pages/Sites";
 import Links from "./pages/Links";
 import ClientPortal from "./pages/portal/ClientPortal";
+import BookingPage from "./pages/BookingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
