@@ -240,6 +240,7 @@ export default function Pipeline() {
             Add Lead
           </Button>
         </div>
+      </div>
 
       <DndContext
         sensors={sensors}
