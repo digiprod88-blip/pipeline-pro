@@ -4,10 +4,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CheckCircle2, Clock, DollarSign, MessageSquare, LogOut, User,
-  ArrowRight, FileText, FileDown,
+  ArrowRight, FileText, FileDown, Target, GraduationCap,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +15,8 @@ import ClientFiles from "@/components/files/ClientFiles";
 import { downloadInvoice } from "@/lib/invoice";
 import { ClientUploads } from "@/components/portal/ClientUploads";
 import { SupportTickets } from "@/components/portal/SupportTickets";
+import { GrowthHub } from "@/components/portal/GrowthHub";
+import { LearningJourney } from "@/components/portal/LearningJourney";
 
 export default function ClientPortal() {
   const { user } = useAuth();
@@ -143,7 +145,7 @@ export default function ClientPortal() {
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-        {/* Status Card */}
+        {/* Status Cards */}
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardContent className="pt-6">
@@ -161,7 +163,6 @@ export default function ClientPortal() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -175,7 +176,6 @@ export default function ClientPortal() {
               </div>
             </CardContent>
           </Card>
-
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -193,144 +193,169 @@ export default function ClientPortal() {
           </Card>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* Tasks */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <FileText className="h-4 w-4" />Project Tasks
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {(!tasks || tasks.length === 0) && (
-                <p className="text-sm text-muted-foreground">No tasks to show</p>
-              )}
-              {tasks?.map((task) => (
-                <div key={task.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                  <div className="flex items-center gap-3">
-                    {task.status === "completed" ? (
-                      <CheckCircle2 className="h-4 w-4 text-success" />
-                    ) : (
-                      <Clock className="h-4 w-4 text-warning" />
-                    )}
-                    <div>
-                      <p className={`text-sm ${task.status === "completed" ? "line-through text-muted-foreground" : "font-medium"}`}>
-                        {task.title}
-                      </p>
-                      {task.due_date && (
-                        <p className="text-xs text-muted-foreground">
-                          Due: {format(new Date(task.due_date), "MMM d, yyyy")}
-                        </p>
-                      )}
+        {/* Tabs */}
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
+            <TabsTrigger value="growth" className="text-xs">
+              <Target className="h-3.5 w-3.5 mr-1" /> Growth Hub
+            </TabsTrigger>
+            <TabsTrigger value="learning" className="text-xs">
+              <GraduationCap className="h-3.5 w-3.5 mr-1" /> My Learning
+            </TabsTrigger>
+            <TabsTrigger value="files" className="text-xs">Files</TabsTrigger>
+            <TabsTrigger value="support" className="text-xs">Support</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Tasks */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <FileText className="h-4 w-4" />Project Tasks
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {(!tasks || tasks.length === 0) && (
+                    <p className="text-sm text-muted-foreground">No tasks to show</p>
+                  )}
+                  {tasks?.map((task) => (
+                    <div key={task.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div className="flex items-center gap-3">
+                        {task.status === "completed" ? (
+                          <CheckCircle2 className="h-4 w-4 text-success" />
+                        ) : (
+                          <Clock className="h-4 w-4 text-warning" />
+                        )}
+                        <div>
+                          <p className={`text-sm ${task.status === "completed" ? "line-through text-muted-foreground" : "font-medium"}`}>
+                            {task.title}
+                          </p>
+                          {task.due_date && (
+                            <p className="text-xs text-muted-foreground">
+                              Due: {format(new Date(task.due_date), "MMM d, yyyy")}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <Badge
+                        variant={task.status === "completed" ? "success" : task.status === "in_progress" ? "warning" : "secondary"}
+                        className="text-xs capitalize"
+                      >
+                        {task.status.replace("_", " ")}
+                      </Badge>
                     </div>
-                  </div>
-                  <Badge
-                    variant={task.status === "completed" ? "success" : task.status === "in_progress" ? "warning" : "secondary"}
-                    className="text-xs capitalize"
-                  >
-                    {task.status.replace("_", " ")}
-                  </Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+                  ))}
+                </CardContent>
+              </Card>
 
-          {/* Messages */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />Messages
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
-              {(!messages || messages.length === 0) && (
-                <p className="text-sm text-muted-foreground">No messages yet</p>
-              )}
-              {messages?.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`rounded-lg p-3 text-sm ${
-                    msg.direction === "inbound"
-                      ? "bg-secondary ml-0 mr-8"
-                      : "bg-primary/10 ml-8 mr-0"
-                  }`}
-                >
-                  <p>{msg.content}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {format(new Date(msg.created_at), "MMM d, HH:mm")}
-                    <span className="ml-2 capitalize">{msg.channel}</span>
-                  </p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Payment History */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />Payment History
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {(!orders || orders.length === 0) && (
-              <p className="text-sm text-muted-foreground">No payments recorded</p>
-            )}
-            <div className="space-y-2">
-              {orders?.map((order) => (
-                <div key={order.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                  <div>
-                    <p className="text-sm font-medium">
-                      {(order as any).products?.name || "Payment"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(order.created_at), "MMM d, yyyy")}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold">
-                      {order.currency === "INR" ? "₹" : "$"}{Number(order.amount).toLocaleString()}
-                    </span>
-                    <Badge
-                      variant={order.status === "completed" ? "success" : order.status === "pending" ? "warning" : "secondary"}
-                      className="text-xs capitalize"
+              {/* Messages */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />Messages
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {(!messages || messages.length === 0) && (
+                    <p className="text-sm text-muted-foreground">No messages yet</p>
+                  )}
+                  {messages?.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`rounded-lg p-3 text-sm ${
+                        msg.direction === "inbound"
+                          ? "bg-secondary ml-0 mr-8"
+                          : "bg-primary/10 ml-8 mr-0"
+                      }`}
                     >
-                      {order.status}
-                    </Badge>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => {
-                        downloadInvoice({
-                          invoiceNumber: (order as any).invoice_number || order.id.slice(0, 8).toUpperCase(),
-                          date: format(new Date(order.created_at), "MMM d, yyyy"),
-                          customerName: `${contact?.first_name} ${contact?.last_name}`,
-                          productName: (order as any).products?.name || "Service",
-                          amount: Number(order.amount),
-                          currency: order.currency,
-                          status: order.status,
-                        });
-                      }}
-                    >
-                      <FileDown className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                      <p>{msg.content}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {format(new Date(msg.created_at), "MMM d, HH:mm")}
+                        <span className="ml-2 capitalize">{msg.channel}</span>
+                      </p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Client Uploads */}
-        <ClientUploads contactId={contactId!} />
+            {/* Payment History */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />Payment History
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(!orders || orders.length === 0) && (
+                  <p className="text-sm text-muted-foreground">No payments recorded</p>
+                )}
+                <div className="space-y-2">
+                  {orders?.map((order) => (
+                    <div key={order.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div>
+                        <p className="text-sm font-medium">
+                          {(order as any).products?.name || "Payment"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(order.created_at), "MMM d, yyyy")}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold">
+                          {order.currency === "INR" ? "₹" : "$"}{Number(order.amount).toLocaleString()}
+                        </span>
+                        <Badge
+                          variant={order.status === "completed" ? "success" : order.status === "pending" ? "warning" : "secondary"}
+                          className="text-xs capitalize"
+                        >
+                          {order.status}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => {
+                            downloadInvoice({
+                              invoiceNumber: (order as any).invoice_number || order.id.slice(0, 8).toUpperCase(),
+                              date: format(new Date(order.created_at), "MMM d, yyyy"),
+                              customerName: `${contact?.first_name} ${contact?.last_name}`,
+                              productName: (order as any).products?.name || "Service",
+                              amount: Number(order.amount),
+                              currency: order.currency,
+                              status: order.status,
+                            });
+                          }}
+                        >
+                          <FileDown className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-        {/* Support Tickets */}
-        <SupportTickets contactId={contactId!} />
+          <TabsContent value="growth">
+            <GrowthHub contactId={contactId!} />
+          </TabsContent>
 
-        {/* Shared Files */}
-        <ClientFiles contactId={contactId!} readOnly />
+          <TabsContent value="learning">
+            <LearningJourney />
+          </TabsContent>
+
+          <TabsContent value="files" className="space-y-6">
+            <ClientUploads contactId={contactId!} />
+            <ClientFiles contactId={contactId!} readOnly />
+          </TabsContent>
+
+          <TabsContent value="support">
+            <SupportTickets contactId={contactId!} />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

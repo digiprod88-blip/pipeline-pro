@@ -1,0 +1,28 @@
+{
+  "name": "Pipeline Pro CRM",
+  "short_name": "Pipeline Pro",
+  "description": "Professional CRM for Digital Marketing Consultants",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FCFCFD",
+  "theme_color": "#2B2F3A",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
