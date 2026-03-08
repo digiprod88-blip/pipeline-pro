@@ -26,6 +26,7 @@ const TRIGGER_TYPES = [
 const ACTION_TYPES = [
   { value: "send_whatsapp", label: "Send WhatsApp Message", icon: MessageSquare },
   { value: "send_email", label: "Send Email", icon: MessageSquare },
+  { value: "wait", label: "⏳ Wait / Delay", icon: Clock },
   { value: "add_to_group", label: "Add to Contact Group", icon: Users },
   { value: "remove_from_group", label: "Remove from Group", icon: Users },
   { value: "send_notification", label: "Send Notification", icon: Bell },
