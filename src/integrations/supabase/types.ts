@@ -570,6 +570,9 @@ export type Database = {
           created_at: string
           currency: string
           id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          notes: string | null
           payment_id: string | null
           payment_method: string | null
           product_id: string | null
@@ -582,6 +585,9 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          notes?: string | null
           payment_id?: string | null
           payment_method?: string | null
           product_id?: string | null
@@ -594,6 +600,9 @@ export type Database = {
           created_at?: string
           currency?: string
           id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          notes?: string | null
           payment_id?: string | null
           payment_method?: string | null
           product_id?: string | null
@@ -806,6 +815,38 @@ export type Database = {
           utm_source?: string | null
         }
         Relationships: []
+      }
+      task_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
