@@ -18,7 +18,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, GripVertical } from "lucide-react";
+import { Plus, GripVertical, ArrowUpDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { AddContactDialog } from "@/components/contacts/AddContactDialog";
 import LeadScoreBadge from "@/components/dashboard/LeadScoreBadge";
@@ -142,6 +143,7 @@ export default function Pipeline() {
   const [activeContact, setActiveContact] = useState<Contact | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<"default" | "score_desc" | "score_asc" | "value_desc">("default");
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -220,10 +222,24 @@ export default function Pipeline() {
           <h1 className="text-2xl font-semibold">Pipeline</h1>
           <p className="text-sm text-muted-foreground">Drag leads across stages</p>
         </div>
-        <Button onClick={() => { setSelectedStageId(stages?.[0]?.id ?? null); setDialogOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Lead
-        </Button>
+        <div className="flex items-center gap-3">
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+            <SelectTrigger className="w-[160px]">
+              <ArrowUpDown className="h-3.5 w-3.5 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Default</SelectItem>
+              <SelectItem value="score_desc">Score ↓</SelectItem>
+              <SelectItem value="score_asc">Score ↑</SelectItem>
+              <SelectItem value="value_desc">Value ↓</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={() => { setSelectedStageId(stages?.[0]?.id ?? null); setDialogOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Lead
+          </Button>
+        </div>
       </div>
 
       <DndContext
@@ -233,14 +249,20 @@ export default function Pipeline() {
         onDragEnd={handleDragEnd}
       >
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {stages?.map((stage) => (
-            <StageColumn
-              key={stage.id}
-              stage={stage}
-              contacts={contacts?.filter((c) => c.stage_id === stage.id) ?? []}
-              onAddContact={handleAddContact}
-            />
-          ))}
+          {stages?.map((stage) => {
+            let stageContacts = contacts?.filter((c) => c.stage_id === stage.id) ?? [];
+            if (sortBy === "score_desc") stageContacts = [...stageContacts].sort((a, b) => (b.lead_score ?? 0) - (a.lead_score ?? 0));
+            else if (sortBy === "score_asc") stageContacts = [...stageContacts].sort((a, b) => (a.lead_score ?? 0) - (b.lead_score ?? 0));
+            else if (sortBy === "value_desc") stageContacts = [...stageContacts].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0));
+            return (
+              <StageColumn
+                key={stage.id}
+                stage={stage}
+                contacts={stageContacts}
+                onAddContact={handleAddContact}
+              />
+            );
+          })}
         </div>
         <DragOverlay>
           {activeContact && <LeadCard contact={activeContact} />}
