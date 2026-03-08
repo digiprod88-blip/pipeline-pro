@@ -273,6 +273,13 @@ export default function Tasks() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+              <div className="space-y-0.5">
+                <Label>Visible to Client</Label>
+                <p className="text-xs text-muted-foreground">Client can see this task in their portal</p>
+              </div>
+              <Switch checked={visibleToClient} onCheckedChange={setVisibleToClient} />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
