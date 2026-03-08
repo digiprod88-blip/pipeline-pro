@@ -1015,6 +1015,56 @@ export type Database = {
           },
         ]
       }
+      segment_messages: {
+        Row: {
+          channel: string
+          completed_at: string | null
+          created_at: string
+          failed_count: number
+          id: string
+          segment_id: string
+          sent_count: number
+          status: string
+          template_content: string
+          total_contacts: number
+          user_id: string
+        }
+        Insert: {
+          channel?: string
+          completed_at?: string | null
+          created_at?: string
+          failed_count?: number
+          id?: string
+          segment_id: string
+          sent_count?: number
+          status?: string
+          template_content: string
+          total_contacts?: number
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          completed_at?: string | null
+          created_at?: string
+          failed_count?: number
+          id?: string
+          segment_id?: string
+          sent_count?: number
+          status?: string
+          template_content?: string
+          total_contacts?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "segment_messages_segment_id_fkey"
+            columns: ["segment_id"]
+            isOneToOne: false
+            referencedRelation: "dynamic_segments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       short_links: {
         Row: {
           clicks_count: number
