@@ -21,6 +21,9 @@ const TRIGGER_TYPES = [
   { value: "webhook", label: "Webhook Received", icon: Zap },
   { value: "form_submit", label: "Form Submitted", icon: Zap },
   { value: "group_added", label: "Added to Contact Group", icon: Users },
+  { value: "link_click", label: "🔗 Link Clicked", icon: Zap },
+  { value: "score_threshold", label: "⭐ Lead Score Threshold", icon: Zap },
+  { value: "lms_enrollment", label: "📚 Course Enrolled (LMS)", icon: Zap },
 ];
 
 const ACTION_TYPES = [
