@@ -206,7 +206,7 @@ export default function SocialScheduler() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+      </motion.div>
 
       {/* Content Library Picker */}
       <Dialog open={contentLibOpen} onOpenChange={setContentLibOpen}>
