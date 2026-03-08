@@ -148,7 +148,7 @@ export default function BookingPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <Card className="max-w-md w-full text-center p-8">
-          <CheckCircle2 className="h-16 w-16 mx-auto text-green-500 mb-4" />
+          <CheckCircle2 className="h-16 w-16 mx-auto text-success mb-4" />
           <h2 className="text-xl font-semibold mb-2">Booking Confirmed!</h2>
           <p className="text-muted-foreground text-sm">
             Your appointment on{" "}

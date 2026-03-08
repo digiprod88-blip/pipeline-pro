@@ -67,6 +67,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          <Route path="/book/:userId" element={<BookingPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
