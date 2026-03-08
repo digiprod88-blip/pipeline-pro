@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   CheckCircle2, Clock, DollarSign, MessageSquare, LogOut, User,
-  ArrowRight, FileText,
+  ArrowRight, FileText, FileDown,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import ClientFiles from "@/components/files/ClientFiles";
+import { downloadInvoice } from "@/lib/invoice";
 
 export default function ClientPortal() {
   const { user } = useAuth();
@@ -295,6 +296,24 @@ export default function ClientPortal() {
                     >
                       {order.status}
                     </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => {
+                        downloadInvoice({
+                          invoiceNumber: (order as any).invoice_number || order.id.slice(0, 8).toUpperCase(),
+                          date: format(new Date(order.created_at), "MMM d, yyyy"),
+                          customerName: `${contact?.first_name} ${contact?.last_name}`,
+                          productName: (order as any).products?.name || "Service",
+                          amount: Number(order.amount),
+                          currency: order.currency,
+                          status: order.status,
+                        });
+                      }}
+                    >
+                      <FileDown className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               ))}
