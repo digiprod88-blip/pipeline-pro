@@ -84,6 +84,12 @@ function LeadCard({ contact, isDragging }: { contact: Contact; isDragging?: bool
           {contact.value && Number(contact.value) > 0 && (
             <p className="text-xs text-muted-foreground mt-2">${Number(contact.value).toLocaleString()}</p>
           )}
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
+              {contact.first_name[0]}
+            </div>
+            <LeadScoreBadge score={contact.lead_score ?? 0} />
+          </div>
         </CardContent>
       </Card>
     </div>
