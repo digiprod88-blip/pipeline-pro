@@ -191,7 +191,7 @@ export default function Shop() {
           <Card>
             <CardContent className="p-0">
               <div className="divide-y divide-border">
-                {orders?.map((order: any) => (
+                 {orders?.map((order: any) => (
                   <div key={order.id} className="flex items-center justify-between p-4">
                     <div>
                       <p className="text-sm font-medium">{order.products?.name || "—"}</p>
@@ -202,6 +202,26 @@ export default function Shop() {
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm">{order.currency === "INR" ? "₹" : "$"}{Number(order.amount).toLocaleString()}</span>
                       <Badge variant={order.status === "paid" ? "success" : order.status === "pending" ? "warm" : "secondary"} className="capitalize text-xs">{order.status}</Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => {
+                          downloadInvoice({
+                            invoiceNumber: order.invoice_number || order.id.slice(0, 8).toUpperCase(),
+                            date: format(new Date(order.created_at), "MMM d, yyyy"),
+                            customerName: order.contacts ? `${order.contacts.first_name} ${order.contacts.last_name}` : "Customer",
+                            customerEmail: undefined,
+                            productName: order.products?.name || "Service",
+                            amount: Number(order.amount),
+                            currency: order.currency,
+                            status: order.status,
+                            paymentMethod: order.payment_method || undefined,
+                          });
+                        }}
+                      >
+                        <FileDown className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </div>
                 ))}
