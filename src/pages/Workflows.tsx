@@ -174,6 +174,38 @@ export default function Workflows() {
                         <Input type="number" min={0} value={action.delay_minutes} onChange={e => { const a = [...actions]; a[i].delay_minutes = parseInt(e.target.value) || 0; setActions(a); }} className="w-20" />
                         <span className="text-xs text-muted-foreground">minutes delay</span>
                       </div>
+                      {(action.action_type === "send_whatsapp" || action.action_type === "send_email") && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <Select
+                              value={action.action_config?.template_id || "custom"}
+                              onValueChange={v => {
+                                const a = [...actions];
+                                if (v === "custom") {
+                                  a[i].action_config = { ...a[i].action_config, template_id: undefined };
+                                } else {
+                                  const tmpl = templates?.find(t => t.id === v);
+                                  a[i].action_config = { ...a[i].action_config, template_id: v, message: tmpl?.content || "" };
+                                }
+                                setActions(a);
+                              }}
+                            >
+                              <SelectTrigger className="flex-1"><SelectValue placeholder="Select template" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="custom">Custom Message</SelectItem>
+                                {templates?.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Textarea
+                            placeholder="Message content..."
+                            value={action.action_config?.message || ""}
+                            onChange={e => { const a = [...actions]; a[i].action_config = { ...a[i].action_config, message: e.target.value }; setActions(a); }}
+                            rows={2}
+                          />
+                        </div>
+                      )}
                     </div>
                   </Card>
                 ))}

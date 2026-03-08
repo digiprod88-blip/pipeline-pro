@@ -217,6 +217,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <LeadScoreBadge score={contact.lead_score ?? 0} />
                   {contact.value && Number(contact.value) > 0 && (
                     <span className="text-xs text-muted-foreground">${Number(contact.value).toLocaleString()}</span>
                   )}
