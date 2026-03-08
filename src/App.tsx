@@ -21,6 +21,7 @@ import CallManagement from "./pages/CallManagement";
 import Shop from "./pages/Shop";
 import Sites from "./pages/Sites";
 import Links from "./pages/Links";
+import ContentLab from "./pages/ContentLab";
 import ClientPortal from "./pages/portal/ClientPortal";
 import BookingPage from "./pages/BookingPage";
 import NotFound from "./pages/NotFound";
