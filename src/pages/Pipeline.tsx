@@ -143,6 +143,7 @@ export default function Pipeline() {
   const [activeContact, setActiveContact] = useState<Contact | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<"default" | "score_desc" | "score_asc" | "value_desc">("default");
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
