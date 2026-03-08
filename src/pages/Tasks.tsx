@@ -44,6 +44,7 @@ export default function Tasks() {
   const [dueDate, setDueDate] = useState("");
   const [contactId, setContactId] = useState<string>("");
   const [visibleToClient, setVisibleToClient] = useState(false);
+  const [expandedTask, setExpandedTask] = useState<string | null>(null);
 
   const { data: tasks } = useQuery({
     queryKey: ["tasks", statusFilter, search],
