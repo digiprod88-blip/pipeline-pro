@@ -360,6 +360,14 @@ export default function ClientPortal() {
             <ClientFiles contactId={contactId!} readOnly />
           </TabsContent>
 
+          <TabsContent value="journal">
+            <JournalVisionBoard contactId={contactId!} />
+          </TabsContent>
+
+          <TabsContent value="referrals">
+            <ReferralHub contactId={contactId!} />
+          </TabsContent>
+
           <TabsContent value="support">
             <SupportTickets contactId={contactId!} />
           </TabsContent>

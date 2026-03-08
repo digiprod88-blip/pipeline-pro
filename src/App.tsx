@@ -59,6 +59,7 @@ const App = () => (
             <Route path="/sites" element={<Sites />} />
             <Route path="/links" element={<Links />} />
             <Route path="/content-lab" element={<ContentLab />} />
+            <Route path="/segments" element={<SmartSegments />} />
             <Route path="/team" element={<TeamManagement />} />
             <Route path="/settings" element={<Settings />} />
           </Route>

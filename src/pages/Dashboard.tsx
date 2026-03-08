@@ -161,6 +161,9 @@ export default function Dashboard() {
         </motion.div>
       </div>
 
+      {/* Team Leaderboard */}
+      <TeamLeaderboard />
+
       {/* Priority Leads */}
       <HotLeadsWidget />
 
