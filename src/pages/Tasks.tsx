@@ -42,6 +42,7 @@ export default function Tasks() {
   const [priority, setPriority] = useState<string>("medium");
   const [dueDate, setDueDate] = useState("");
   const [contactId, setContactId] = useState<string>("");
+  const [visibleToClient, setVisibleToClient] = useState(false);
 
   const { data: tasks } = useQuery({
     queryKey: ["tasks", statusFilter, search],
