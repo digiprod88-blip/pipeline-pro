@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, Send, Clock, Trash2, Facebook, Instagram, Twitter, CalendarDays, FileText } from "lucide-react";
+import { Plus, Send, Clock, Trash2, Facebook, Instagram, Twitter, CalendarDays, FileText, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { format, isSameDay } from "date-fns";
 
