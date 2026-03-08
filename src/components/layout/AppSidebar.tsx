@@ -38,24 +38,24 @@ export function AppSidebar() {
 
   return (
     <aside className="flex h-screen w-60 flex-col border-r border-sidebar-border bg-sidebar">
-      <div className="flex items-center justify-between border-b border-sidebar-border px-5 py-5">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between border-b border-sidebar-border px-5 py-4">
+        <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-bold text-primary-foreground">C</span>
+            <span className="text-sm font-bold text-primary-foreground">P</span>
           </div>
-          <span className="text-base font-semibold text-sidebar-foreground">Calvin CRM</span>
+          <span className="text-sm font-semibold text-sidebar-foreground tracking-tight">Pipeline Pro</span>
         </div>
         <NotificationBell />
       </div>
 
-      <div className="px-3 py-3">
+      <div className="px-3 py-2.5">
         <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search..." className="h-9 pl-8 text-sm bg-sidebar-accent border-sidebar-border" />
+          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+          <Input placeholder="Search..." className="h-8 pl-8 text-xs bg-sidebar-accent border-sidebar-border rounded-lg" />
         </div>
       </div>
 
-      <nav className="flex-1 space-y-0.5 px-3">
+      <nav className="flex-1 space-y-0.5 px-2.5 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + "/");
           return (
@@ -63,22 +63,22 @@ export function AppSidebar() {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-2.5 rounded-lg px-2.5 py-[7px] text-[13px] font-medium transition-all duration-150",
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-foreground"
-                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  ? "bg-sidebar-accent text-sidebar-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
               )}
             >
-              <item.icon className="h-4 w-4" />
+              <item.icon className="h-4 w-4 shrink-0" />
               {item.label}
             </Link>
           );
         })}
       </nav>
 
-      <div className="border-t border-sidebar-border p-3">
-        <Button variant="ghost" className="w-full justify-start gap-3 text-muted-foreground hover:text-foreground" onClick={handleLogout}>
-          <LogOut className="h-4 w-4" />Sign out
+      <div className="border-t border-sidebar-border p-2.5">
+        <Button variant="ghost" className="w-full justify-start gap-2.5 text-xs text-muted-foreground hover:text-foreground h-8" onClick={handleLogout}>
+          <LogOut className="h-3.5 w-3.5" />Sign out
         </Button>
       </div>
     </aside>

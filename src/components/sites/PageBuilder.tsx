@@ -4,6 +4,7 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -15,12 +16,13 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
-  ArrowLeft, Save, Eye, Plus, Type, Image, Star, MessageSquare, Layout, Zap,
+  ArrowLeft, Save, Plus, Type, Image, Star, MessageSquare, Layout, Zap,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -57,8 +59,10 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [showPalette, setShowPalette] = useState(false);
 
+  // Add TouchSensor for mobile support
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -100,29 +104,32 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
   const selectedBlockData = blocks.find((b) => b.id === selectedBlock);
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full flex-col md:flex-row">
       {/* Main Canvas */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Toolbar */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={onBack}>
-              <ArrowLeft className="h-4 w-4 mr-1" /> Back
+        <div className="flex items-center justify-between px-3 md:px-4 py-2.5 border-b border-border bg-card gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <Button variant="ghost" size="sm" onClick={onBack} className="shrink-0">
+              <ArrowLeft className="h-4 w-4 md:mr-1" />
+              <span className="hidden md:inline">Back</span>
             </Button>
-            <h2 className="text-sm font-medium truncate max-w-[200px]">{pageTitle}</h2>
-            <Badge variant="secondary" className="text-xs">{blocks.length} blocks</Badge>
+            <h2 className="text-sm font-medium truncate">{pageTitle}</h2>
+            <Badge variant="secondary" className="text-xs hidden sm:inline-flex">{blocks.length} blocks</Badge>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Button variant="outline" size="sm" onClick={() => setShowPalette(!showPalette)}>
-              <Plus className="h-4 w-4 mr-1" /> Add Block
+              <Plus className="h-4 w-4 md:mr-1" />
+              <span className="hidden md:inline">Add Block</span>
             </Button>
             <Button size="sm" onClick={() => onSave(blocks)} disabled={saving}>
-              <Save className="h-4 w-4 mr-1" /> {saving ? "Saving..." : "Save"}
+              <Save className="h-4 w-4 md:mr-1" />
+              <span className="hidden md:inline">{saving ? "Saving..." : "Save"}</span>
             </Button>
           </div>
         </div>
 
-        {/* Block Palette */}
+        {/* Block Palette - responsive grid */}
         <AnimatePresence>
           {showPalette && (
             <motion.div
@@ -131,15 +138,15 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
               exit={{ height: 0, opacity: 0 }}
               className="border-b border-border bg-muted/30 overflow-hidden"
             >
-              <div className="p-4 grid grid-cols-3 md:grid-cols-6 gap-2">
+              <div className="p-3 md:p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
                 {BLOCK_TEMPLATES.map((t) => (
                   <button
                     key={t.type}
                     onClick={() => addBlock(t.type)}
-                    className="flex flex-col items-center gap-2 p-3 rounded-lg border border-border bg-card hover:border-primary/50 hover:bg-accent transition-colors text-xs"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-border bg-card hover:border-primary/30 hover:shadow-sm active:scale-[0.97] transition-all text-xs touch-manipulation"
                   >
                     <t.icon className="h-5 w-5 text-muted-foreground" />
-                    <span className="text-foreground font-medium">{t.label}</span>
+                    <span className="text-foreground font-medium text-center leading-tight">{t.label}</span>
                   </button>
                 ))}
               </div>
@@ -148,11 +155,11 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
         </AnimatePresence>
 
         {/* Canvas */}
-        <div className="flex-1 overflow-y-auto p-6 bg-background">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-background">
           {blocks.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center">
-              <Layout className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground text-sm">No blocks yet. Click "Add Block" to start building.</p>
+            <div className="flex flex-col items-center justify-center h-full text-center px-4">
+              <Layout className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <p className="text-muted-foreground text-sm">No blocks yet. Tap "Add Block" to start building.</p>
             </div>
           ) : (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -174,17 +181,12 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
         </div>
       </div>
 
-      {/* Properties Panel */}
-      <AnimatePresence>
-        {selectedBlockData && (
-          <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="border-l border-border bg-card overflow-hidden shrink-0"
-          >
-            <div className="w-[320px] h-full overflow-y-auto p-4 space-y-4">
+      {/* Properties Panel - uses Sheet on mobile, side panel on desktop */}
+      {selectedBlockData && (
+        <>
+          {/* Desktop: inline panel */}
+          <div className="hidden md:block border-l border-border bg-card shrink-0 w-[320px] overflow-y-auto">
+            <div className="p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold capitalize">{selectedBlockData.type} Settings</h3>
                 <Button variant="ghost" size="sm" onClick={() => setSelectedBlock(null)}>✕</Button>
@@ -193,25 +195,37 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
                 <div key={key} className="space-y-1">
                   <label className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1").replace(/(\d+)/g, " $1")}</label>
                   {value.length > 60 || key === "body" ? (
-                    <Textarea
-                      value={value}
-                      onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)}
-                      rows={3}
-                      className="text-sm"
-                    />
+                    <Textarea value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} rows={3} className="text-sm" />
                   ) : (
-                    <Input
-                      value={value}
-                      onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)}
-                      className="text-sm"
-                    />
+                    <Input value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} className="text-sm" />
                   )}
                 </div>
               ))}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+
+          {/* Mobile: bottom sheet */}
+          <Sheet open={!!selectedBlockData} onOpenChange={(open) => { if (!open) setSelectedBlock(null); }}>
+            <SheetContent side="bottom" className="md:hidden max-h-[70vh] overflow-y-auto rounded-t-2xl">
+              <SheetHeader>
+                <SheetTitle className="capitalize">{selectedBlockData.type} Settings</SheetTitle>
+              </SheetHeader>
+              <div className="space-y-4 pt-4 pb-6">
+                {Object.entries(selectedBlockData.content).map(([key, value]) => (
+                  <div key={key} className="space-y-1">
+                    <label className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1").replace(/(\d+)/g, " $1")}</label>
+                    {value.length > 60 || key === "body" ? (
+                      <Textarea value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} rows={3} className="text-sm" />
+                    ) : (
+                      <Input value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} className="text-sm" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </>
+      )}
     </div>
   );
 }
