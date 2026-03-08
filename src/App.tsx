@@ -19,6 +19,8 @@ import Workflows from "./pages/Workflows";
 import CalendarPage from "./pages/CalendarPage";
 import CallManagement from "./pages/CallManagement";
 import Shop from "./pages/Shop";
+import Sites from "./pages/Sites";
+import Links from "./pages/Links";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +52,8 @@ const App = () => (
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/calls" element={<CallManagement />} />
             <Route path="/shop" element={<Shop />} />
+            <Route path="/sites" element={<Sites />} />
+            <Route path="/links" element={<Links />} />
             <Route path="/team" element={<TeamManagement />} />
             <Route path="/settings" element={<Settings />} />
           </Route>

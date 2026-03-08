@@ -302,6 +302,119 @@ export type Database = {
           },
         ]
       }
+      landing_pages: {
+        Row: {
+          content: Json | null
+          created_at: string
+          custom_css: string | null
+          description: string | null
+          id: string
+          is_published: boolean
+          leads_count: number
+          meta_description: string | null
+          meta_title: string | null
+          slug: string
+          template: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          views_count: number
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string
+          custom_css?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          leads_count?: number
+          meta_description?: string | null
+          meta_title?: string | null
+          slug: string
+          template?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          views_count?: number
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string
+          custom_css?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean
+          leads_count?: number
+          meta_description?: string | null
+          meta_title?: string | null
+          slug?: string
+          template?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          views_count?: number
+        }
+        Relationships: []
+      }
+      link_clicks: {
+        Row: {
+          browser: string | null
+          city: string | null
+          country: string | null
+          created_at: string
+          device_type: string | null
+          id: string
+          ip_address: string | null
+          link_id: string
+          os: string | null
+          referer: string | null
+          user_agent: string | null
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          link_id: string
+          os?: string | null
+          referer?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          browser?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          link_id?: string
+          os?: string | null
+          referer?: string | null
+          user_agent?: string | null
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "link_clicks_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "short_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       message_templates: {
         Row: {
           channel: string
@@ -588,6 +701,54 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      short_links: {
+        Row: {
+          clicks_count: number
+          created_at: string
+          id: string
+          is_active: boolean
+          original_url: string
+          short_code: string
+          title: string | null
+          updated_at: string
+          user_id: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          clicks_count?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          original_url: string
+          short_code: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          clicks_count?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          original_url?: string
+          short_code?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
         }
         Relationships: []
       }
