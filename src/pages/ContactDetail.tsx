@@ -108,6 +108,7 @@ export default function ContactDetail() {
           <div>
             <h1 className="text-2xl font-semibold">{contact.first_name} {contact.last_name}</h1>
             <div className="flex items-center gap-2 mt-1">
+              <LeadScoreBadge score={contact.lead_score ?? 0} />
               <Badge variant={contact.status === "customer" ? "success" : "secondary"} className="capitalize">{contact.status}</Badge>
               {contact.quality && (
                 <Badge variant={contact.quality === "hot" ? "hot" : contact.quality === "warm" ? "warm" : "cold"} className="capitalize">{contact.quality}</Badge>
