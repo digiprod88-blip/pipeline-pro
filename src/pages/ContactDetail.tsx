@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { UnifiedInbox } from "@/components/contacts/UnifiedInbox";
 import { ContactTimeline } from "@/components/contacts/ContactTimeline";
 import LeadScoreBadge from "@/components/dashboard/LeadScoreBadge";
+import ClientFiles from "@/components/files/ClientFiles";
 
 export default function ContactDetail() {
   const { id } = useParams<{ id: string }>();
@@ -203,6 +204,8 @@ export default function ContactDetail() {
               {(!contactTasks || contactTasks.length === 0) && <p className="text-xs text-muted-foreground">No tasks</p>}
             </CardContent>
           </Card>
+
+          <ClientFiles contactId={id!} />
         </div>
 
         {/* Timeline & Inbox Column */}
