@@ -204,6 +204,8 @@ export default function ContactDetail() {
               {(!contactTasks || contactTasks.length === 0) && <p className="text-xs text-muted-foreground">No tasks</p>}
             </CardContent>
           </Card>
+
+          <ClientFiles contactId={id!} />
         </div>
 
         {/* Timeline & Inbox Column */}
