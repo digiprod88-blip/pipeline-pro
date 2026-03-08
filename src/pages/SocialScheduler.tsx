@@ -128,7 +128,12 @@ export default function SocialScheduler() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <motion.div
+        className="flex items-center justify-between"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
         <div>
           <h1 className="text-2xl font-semibold flex items-center gap-2">
             <Send className="h-6 w-6 text-primary" /> Social Media Scheduler
