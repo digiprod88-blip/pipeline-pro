@@ -125,8 +125,29 @@ serve(async (req) => {
       user_id: webhook.user_id,
       contact_id: contact.id,
       type: "webhook",
-      description: `Lead captured via webhook "${webhook.name}"`,
+      description: `Lead captured via webhook "${webhook.name}"${inboundMessage ? ` — "${inboundMessage}"` : ""}`,
       metadata: { source: source || "webhook", webhook_name: webhook.name },
+    });
+
+    // If there's an inbound message, also log it to messages table
+    if (inboundMessage) {
+      await supabase.from("messages").insert({
+        user_id: webhook.user_id,
+        contact_id: contact.id,
+        channel: source || "whatsapp",
+        direction: "inbound",
+        content: inboundMessage,
+        metadata: { auto_created: true, webhook_name: webhook.name },
+      });
+    }
+
+    // Notify admin
+    await supabase.from("notifications").insert({
+      user_id: webhook.user_id,
+      title: "🔔 New Lead Captured",
+      message: `${contactFirstName} ${contactLastName || ""} from ${source || "webhook"}${inboundMessage ? `: "${inboundMessage.slice(0, 100)}"` : ""}`,
+      type: "info",
+      link: `/contacts/${contact.id}`,
     });
 
     return new Response(

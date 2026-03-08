@@ -294,9 +294,16 @@ export default function SocialScheduler() {
                       </Badge>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => deletePost.mutate(post.id)}>
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  <div className="flex gap-1">
+                    {post.status === "scheduled" && (
+                      <Button variant="ghost" size="sm" onClick={() => publishNow.mutate(post.id)} disabled={publishNow.isPending}>
+                        <Rocket className="h-3 w-3" />
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={() => deletePost.mutate(post.id)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
