@@ -181,6 +181,110 @@ export type Database = {
           },
         ]
       }
+      message_templates: {
+        Row: {
+          channel: string
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          channel?: string
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          channel?: string
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          channel: string
+          contact_id: string
+          content: string
+          created_at: string
+          direction: string
+          id: string
+          metadata: Json | null
+          template_name: string | null
+          user_id: string
+        }
+        Insert: {
+          channel?: string
+          contact_id: string
+          content: string
+          created_at?: string
+          direction?: string
+          id?: string
+          metadata?: Json | null
+          template_name?: string | null
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          contact_id?: string
+          content?: string
+          created_at?: string
+          direction?: string
+          id?: string
+          metadata?: Json | null
+          template_name?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          link: string | null
+          message: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          message: string
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          message?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pipeline_stages: {
         Row: {
           color: string | null
