@@ -16,12 +16,14 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import {
   Plus,
   CheckCircle2,
   AlertCircle,
   Clock,
   Search,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, isPast, isFuture, isToday } from "date-fns";
@@ -40,6 +42,7 @@ export default function Tasks() {
   const [priority, setPriority] = useState<string>("medium");
   const [dueDate, setDueDate] = useState("");
   const [contactId, setContactId] = useState<string>("");
+  const [visibleToClient, setVisibleToClient] = useState(false);
 
   const { data: tasks } = useQuery({
     queryKey: ["tasks", statusFilter, search],
@@ -84,6 +87,7 @@ export default function Tasks() {
         priority: priority as any,
         due_date: dueDate ? new Date(dueDate).toISOString() : null,
         contact_id: contactId || null,
+        visible_to_client: visibleToClient,
       });
       if (error) throw error;
     },
@@ -95,6 +99,7 @@ export default function Tasks() {
       setPriority("medium");
       setDueDate("");
       setContactId("");
+      setVisibleToClient(false);
       toast.success("Task created");
     },
     onError: (e) => toast.error(e.message),
@@ -200,6 +205,9 @@ export default function Tasks() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  {task.visible_to_client && (
+                    <span title="Visible to client"><Eye className="h-3.5 w-3.5 text-muted-foreground" /></span>
+                  )}
                   <Badge variant={task.priority === "high" ? "destructive" : task.priority === "low" ? "secondary" : "outline"} className="text-xs capitalize">
                     {task.priority}
                   </Badge>
@@ -264,6 +272,13 @@ export default function Tasks() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+              <div className="space-y-0.5">
+                <Label>Visible to Client</Label>
+                <p className="text-xs text-muted-foreground">Client can see this task in their portal</p>
+              </div>
+              <Switch checked={visibleToClient} onCheckedChange={setVisibleToClient} />
             </div>
           </div>
           <DialogFooter>
