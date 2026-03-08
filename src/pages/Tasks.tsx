@@ -183,38 +183,49 @@ export default function Tasks() {
             transition={{ delay: i * 0.03 }}
           >
             <Card
-              className={`transition-colors ${task.status === "completed" ? "opacity-60" : ""}`}
+              className={`transition-colors cursor-pointer ${task.status === "completed" ? "opacity-60" : ""}`}
+              onClick={() => setExpandedTask(expandedTask === task.id ? null : task.id)}
             >
-              <CardContent className="flex items-center gap-4 p-4">
-                <button onClick={() => toggleComplete.mutate({ id: task.id, currentStatus: task.status })}>
-                  {getTaskIcon(task)}
-                </button>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-medium ${task.status === "completed" ? "line-through" : ""}`}>
-                    {task.title}
-                  </p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    {task.contacts && (
-                      <span className="text-xs text-muted-foreground">
-                        {(task.contacts as any).first_name} {(task.contacts as any).last_name}
-                      </span>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  <button onClick={(e) => { e.stopPropagation(); toggleComplete.mutate({ id: task.id, currentStatus: task.status }); }}>
+                    {getTaskIcon(task)}
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-medium ${task.status === "completed" ? "line-through" : ""}`}>
+                      {task.title}
+                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {task.contacts && (
+                        <span className="text-xs text-muted-foreground">
+                          {(task.contacts as any).first_name} {(task.contacts as any).last_name}
+                        </span>
+                      )}
+                      {task.due_date && (
+                        <span className="text-xs text-muted-foreground">
+                          • {format(new Date(task.due_date), "MMM d, h:mm a")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {task.visible_to_client && (
+                      <span title="Visible to client"><Eye className="h-3.5 w-3.5 text-muted-foreground" /></span>
                     )}
-                    {task.due_date && (
-                      <span className="text-xs text-muted-foreground">
-                        • {format(new Date(task.due_date), "MMM d, h:mm a")}
-                      </span>
-                    )}
+                    <Badge variant={task.priority === "high" ? "destructive" : task.priority === "low" ? "secondary" : "outline"} className="text-xs capitalize">
+                      {task.priority}
+                    </Badge>
+                    {getTaskBadge(task)}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {task.visible_to_client && (
-                    <span title="Visible to client"><Eye className="h-3.5 w-3.5 text-muted-foreground" /></span>
-                  )}
-                  <Badge variant={task.priority === "high" ? "destructive" : task.priority === "low" ? "secondary" : "outline"} className="text-xs capitalize">
-                    {task.priority}
-                  </Badge>
-                  {getTaskBadge(task)}
-                </div>
+                {expandedTask === task.id && (
+                  <div className="mt-4 pt-3 border-t border-border" onClick={(e) => e.stopPropagation()}>
+                    {task.description && (
+                      <p className="text-sm text-muted-foreground mb-3">{task.description}</p>
+                    )}
+                    <TaskComments taskId={task.id} />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
