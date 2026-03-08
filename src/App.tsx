@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Pipeline from "./pages/Pipeline";
 import Contacts from "./pages/Contacts";
 import ContactDetail from "./pages/ContactDetail";
+import ContactGroups from "./pages/ContactGroups";
 import Tasks from "./pages/Tasks";
 import Settings from "./pages/Settings";
 import TeamManagement from "./pages/TeamManagement";
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/pipeline" element={<Pipeline />} />
             <Route path="/contacts" element={<Contacts />} />
             <Route path="/contacts/:id" element={<ContactDetail />} />
+            <Route path="/groups" element={<ContactGroups />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/team" element={<TeamManagement />} />
