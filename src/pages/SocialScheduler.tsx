@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, Send, Clock, Trash2, Facebook, Instagram, Twitter, CalendarDays, FileText } from "lucide-react";
+import { Plus, Send, Clock, Trash2, Facebook, Instagram, Twitter, CalendarDays, FileText, Rocket } from "lucide-react";
 import { toast } from "sonner";
 import { format, isSameDay } from "date-fns";
 
@@ -90,6 +90,23 @@ export default function SocialScheduler() {
       queryClient.invalidateQueries({ queryKey: ["scheduled-posts"] });
       toast.success("Post deleted");
     },
+  });
+
+  const publishNow = useMutation({
+    mutationFn: async (postId: string) => {
+      const { data, error } = await supabase.functions.invoke("social-publish", {
+        body: { post_id: postId },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["scheduled-posts"] });
+      const results = data?.results || {};
+      const summary = Object.entries(results).map(([k, v]: any) => `${k}: ${v.success ? "✓" : v.message}`).join(", ");
+      toast.success(`Publish result: ${summary}`);
+    },
+    onError: (e: any) => toast.error(e.message),
   });
 
   const togglePlatform = (platform: string) => {
@@ -277,9 +294,16 @@ export default function SocialScheduler() {
                       </Badge>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => deletePost.mutate(post.id)}>
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  <div className="flex gap-1">
+                    {post.status === "scheduled" && (
+                      <Button variant="ghost" size="sm" onClick={() => publishNow.mutate(post.id)} disabled={publishNow.isPending}>
+                        <Rocket className="h-3 w-3" />
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={() => deletePost.mutate(post.id)}>
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

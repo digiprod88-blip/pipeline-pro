@@ -53,7 +53,34 @@ serve(async (req) => {
     }
 
     const body = await req.json();
-    const { name, first_name, last_name, email, phone, source, company, value } = body;
+
+    // ── Omni-channel: detect inbound messages from WhatsApp/Messenger webhooks ──
+    const isWhatsAppInbound = body.entry?.[0]?.changes?.[0]?.value?.messages;
+    const isMessengerInbound = body.entry?.[0]?.messaging;
+
+    let name = body.name;
+    let first_name = body.first_name;
+    let last_name = body.last_name;
+    let email = body.email;
+    let phone = body.phone;
+    let source = body.source;
+    let company = body.company;
+    let value = body.value;
+    let inboundMessage = "";
+
+    if (isWhatsAppInbound) {
+      const msg = body.entry[0].changes[0].value.messages[0];
+      const contact = body.entry[0].changes[0].value.contacts?.[0];
+      phone = msg.from;
+      name = contact?.profile?.name || phone;
+      source = "whatsapp";
+      inboundMessage = msg.text?.body || msg.type || "";
+    } else if (isMessengerInbound) {
+      const msg = body.entry[0].messaging[0];
+      name = msg.sender?.id || "Messenger User";
+      source = "messenger";
+      inboundMessage = msg.message?.text || "";
+    }
 
     const contactFirstName = first_name || name?.split(" ")[0] || "Unknown";
     const contactLastName = last_name || (name?.split(" ").slice(1).join(" ") || null);
@@ -98,8 +125,29 @@ serve(async (req) => {
       user_id: webhook.user_id,
       contact_id: contact.id,
       type: "webhook",
-      description: `Lead captured via webhook "${webhook.name}"`,
+      description: `Lead captured via webhook "${webhook.name}"${inboundMessage ? ` — "${inboundMessage}"` : ""}`,
       metadata: { source: source || "webhook", webhook_name: webhook.name },
+    });
+
+    // If there's an inbound message, also log it to messages table
+    if (inboundMessage) {
+      await supabase.from("messages").insert({
+        user_id: webhook.user_id,
+        contact_id: contact.id,
+        channel: source || "whatsapp",
+        direction: "inbound",
+        content: inboundMessage,
+        metadata: { auto_created: true, webhook_name: webhook.name },
+      });
+    }
+
+    // Notify admin
+    await supabase.from("notifications").insert({
+      user_id: webhook.user_id,
+      title: "🔔 New Lead Captured",
+      message: `${contactFirstName} ${contactLastName || ""} from ${source || "webhook"}${inboundMessage ? `: "${inboundMessage.slice(0, 100)}"` : ""}`,
+      type: "info",
+      link: `/contacts/${contact.id}`,
     });
 
     return new Response(

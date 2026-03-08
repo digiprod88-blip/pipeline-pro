@@ -22,7 +22,8 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Upload, Trash2 } from "lucide-react";
+import { Plus, Search, Upload, Trash2, Download } from "lucide-react";
+import { downloadCSV } from "@/lib/csvExport";
 import { toast } from "sonner";
 import { AddContactDialog } from "@/components/contacts/AddContactDialog";
 import { format } from "date-fns";
@@ -126,6 +127,30 @@ export default function Contacts() {
           <p className="text-sm text-muted-foreground">{contacts?.length ?? 0} total contacts</p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (!contacts?.length) return toast.error("No contacts to export");
+              downloadCSV(
+                contacts.map(c => ({
+                  Name: `${c.first_name} ${c.last_name || ""}`.trim(),
+                  Email: c.email || "",
+                  Phone: c.phone || "",
+                  Company: c.company || "",
+                  Status: c.status,
+                  Quality: c.quality || "",
+                  Value: c.value || 0,
+                  Source: c.source || "",
+                  Created: c.created_at,
+                })),
+                `contacts-${new Date().toISOString().slice(0, 10)}`
+              );
+              toast.success("CSV downloaded!");
+            }}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
           <Button variant="outline" onClick={() => setCsvDialogOpen(true)}>
             <Upload className="h-4 w-4 mr-2" />
             Import CSV

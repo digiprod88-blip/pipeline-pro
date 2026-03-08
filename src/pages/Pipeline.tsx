@@ -18,9 +18,10 @@ import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, GripVertical, ArrowUpDown } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, GripVertical, ArrowUpDown, Download } from "lucide-react";
+import { downloadCSV } from "@/lib/csvExport";
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AddContactDialog } from "@/components/contacts/AddContactDialog";
 import LeadScoreBadge from "@/components/dashboard/LeadScoreBadge";
 
@@ -235,6 +236,32 @@ export default function Pipeline() {
               <SelectItem value="value_desc">Value ↓</SelectItem>
             </SelectContent>
           </Select>
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (!contacts?.length) return toast.error("No leads to export");
+              downloadCSV(
+                contacts.map(c => {
+                  const stage = stages?.find(s => s.id === c.stage_id);
+                  return {
+                    Name: `${c.first_name} ${c.last_name || ""}`.trim(),
+                    Email: c.email || "",
+                    Company: c.company || "",
+                    Stage: stage?.name || "",
+                    Quality: c.quality || "",
+                    Value: c.value || 0,
+                    Score: c.lead_score || 0,
+                    Status: c.status,
+                  };
+                }),
+                `pipeline-${new Date().toISOString().slice(0, 10)}`
+              );
+              toast.success("Pipeline exported!");
+            }}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
           <Button onClick={() => { setSelectedStageId(stages?.[0]?.id ?? null); setDialogOpen(true); }}>
             <Plus className="h-4 w-4 mr-2" />
             Add Lead
