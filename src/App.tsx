@@ -23,6 +23,8 @@ import Sites from "./pages/Sites";
 import Links from "./pages/Links";
 import ContentLab from "./pages/ContentLab";
 import SmartSegments from "./pages/SmartSegments";
+import SocialScheduler from "./pages/SocialScheduler";
+import AuditLogs from "./pages/AuditLogs";
 import ClientPortal from "./pages/portal/ClientPortal";
 import BookingPage from "./pages/BookingPage";
 import NotFound from "./pages/NotFound";
