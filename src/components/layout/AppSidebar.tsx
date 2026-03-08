@@ -37,7 +37,7 @@ export function AppSidebar() {
   };
 
   return (
-    <aside className="flex h-screen w-60 flex-col border-r border-sidebar-border bg-sidebar">
+    <aside className="flex h-screen w-60 flex-col glass-sidebar">
       <div className="flex items-center justify-between border-b border-sidebar-border px-5 py-4">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">

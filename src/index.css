@@ -124,8 +124,29 @@
 
 @layer utilities {
   .glass-panel {
-    @apply bg-card/80 backdrop-blur-sm border border-border/50;
+    @apply bg-card/70 backdrop-blur-xl border border-border/40;
     box-shadow: var(--shadow-card);
+  }
+
+  .glass-sidebar {
+    background: hsla(var(--sidebar-background) / 0.75);
+    backdrop-filter: blur(20px) saturate(1.8);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8);
+    border-right: 1px solid hsla(var(--border) / 0.5);
+  }
+
+  .glass-card {
+    background: hsla(var(--card) / 0.7);
+    backdrop-filter: blur(12px) saturate(1.4);
+    -webkit-backdrop-filter: blur(12px) saturate(1.4);
+    border: 1px solid hsla(var(--border) / 0.4);
+    box-shadow: 0 4px 24px -4px rgb(0 0 0 / 0.04), 0 1px 2px rgb(0 0 0 / 0.02);
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
+  }
+
+  .glass-card:hover {
+    box-shadow: 0 8px 32px -6px rgb(0 0 0 / 0.08), 0 2px 4px rgb(0 0 0 / 0.03);
+    transform: translateY(-1px);
   }
 
   .card-elegant {
