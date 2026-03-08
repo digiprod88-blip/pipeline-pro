@@ -16,6 +16,14 @@ import { cn } from "@/lib/utils";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+function useMathChallenge() {
+  const [a] = useState(() => Math.floor(Math.random() * 10) + 1);
+  const [b] = useState(() => Math.floor(Math.random() * 10) + 1);
+  const [answer, setAnswer] = useState("");
+  const isValid = Number(answer) === a + b;
+  return { question: `${a} + ${b} = ?`, answer, setAnswer, isValid };
+}
+
 export default function BookingPage() {
   const { userId } = useParams<{ userId: string }>();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -23,6 +31,7 @@ export default function BookingPage() {
   const [step, setStep] = useState<"date" | "details" | "done">("date");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", notes: "" });
+  const captcha = useMathChallenge();
 
   const { data: slots } = useQuery({
     queryKey: ["public-booking-slots", userId],
