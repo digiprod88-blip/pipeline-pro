@@ -205,6 +205,12 @@ export default function ClientPortal() {
             <TabsTrigger value="learning" className="text-xs">
               <GraduationCap className="h-3.5 w-3.5 mr-1" /> My Learning
             </TabsTrigger>
+            <TabsTrigger value="journal" className="text-xs">
+              <BookOpen className="h-3.5 w-3.5 mr-1" /> Journal
+            </TabsTrigger>
+            <TabsTrigger value="referrals" className="text-xs">
+              <Gift className="h-3.5 w-3.5 mr-1" /> Referrals
+            </TabsTrigger>
             <TabsTrigger value="files" className="text-xs">Files</TabsTrigger>
             <TabsTrigger value="support" className="text-xs">Support</TabsTrigger>
           </TabsList>
