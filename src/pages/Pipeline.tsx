@@ -22,7 +22,6 @@ import { Plus, GripVertical, ArrowUpDown, Download } from "lucide-react";
 import { downloadCSV } from "@/lib/csvExport";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
 import { AddContactDialog } from "@/components/contacts/AddContactDialog";
 import LeadScoreBadge from "@/components/dashboard/LeadScoreBadge";
 
