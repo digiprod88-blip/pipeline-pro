@@ -87,6 +87,7 @@ export default function Tasks() {
         priority: priority as any,
         due_date: dueDate ? new Date(dueDate).toISOString() : null,
         contact_id: contactId || null,
+        visible_to_client: visibleToClient,
       });
       if (error) throw error;
     },
