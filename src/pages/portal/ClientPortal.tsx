@@ -301,6 +301,9 @@ export default function ClientPortal() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Shared Files */}
+        <ClientFiles contactId={contactId!} readOnly />
       </main>
     </div>
   );
