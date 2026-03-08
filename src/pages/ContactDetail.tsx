@@ -44,6 +44,23 @@ export default function ContactDetail() {
     enabled: !!id,
   });
 
+  const { data: scoreBreakdown } = useQuery({
+    queryKey: ["score-breakdown", id],
+    queryFn: async () => {
+      const [{ count: activityCount }, { count: messageCount }, { count: inboundCount }] = await Promise.all([
+        supabase.from("activities").select("*", { count: "exact", head: true }).eq("contact_id", id!),
+        supabase.from("messages").select("*", { count: "exact", head: true }).eq("contact_id", id!),
+        supabase.from("messages").select("*", { count: "exact", head: true }).eq("contact_id", id!).eq("direction", "inbound"),
+      ]);
+      return {
+        activities: activityCount ?? 0,
+        messages: messageCount ?? 0,
+        inbound: inboundCount ?? 0,
+      };
+    },
+    enabled: !!id,
+  });
+
   const { data: userRole } = useQuery({
     queryKey: ["my-role-detail", user?.id],
     queryFn: async () => {
