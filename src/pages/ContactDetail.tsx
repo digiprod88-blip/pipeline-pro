@@ -150,6 +150,48 @@ export default function ContactDetail() {
           )}
 
           <Card>
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Score Breakdown
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Overall Score</span>
+                <LeadScoreBadge score={contact.lead_score ?? 0} />
+              </div>
+              <div className="h-px bg-border" />
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><Activity className="h-3 w-3" />Activities ({scoreBreakdown?.activities ?? 0})</span>
+                  <span className="font-medium">+{(scoreBreakdown?.activities ?? 0) * 10}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><MessageSquare className="h-3 w-3" />Inbound messages ({scoreBreakdown?.inbound ?? 0})</span>
+                  <span className="font-medium">+{(scoreBreakdown?.inbound ?? 0) * 20}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><MessageSquare className="h-3 w-3" />Outbound messages ({(scoreBreakdown?.messages ?? 0) - (scoreBreakdown?.inbound ?? 0)})</span>
+                  <span className="font-medium">+{((scoreBreakdown?.messages ?? 0) - (scoreBreakdown?.inbound ?? 0)) * 5}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><Mail className="h-3 w-3" />Has email</span>
+                  <span className="font-medium">{contact.email ? "+10" : "0"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><Phone className="h-3 w-3" />Has phone</span>
+                  <span className="font-medium">{contact.phone ? "+10" : "0"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><TrendingUp className="h-3 w-3" />Quality bonus ({contact.quality})</span>
+                  <span className="font-medium">+{contact.quality === "hot" ? 30 : contact.quality === "warm" ? 15 : 0}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
             <CardHeader><CardTitle className="text-sm">Tasks ({contactTasks?.length ?? 0})</CardTitle></CardHeader>
             <CardContent className="space-y-2">
               {contactTasks?.map((task) => (

@@ -163,7 +163,7 @@ export default function Pipeline() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contacts")
-        .select("id, first_name, last_name, email, company, quality, value, stage_id, status")
+        .select("id, first_name, last_name, email, company, quality, value, stage_id, status, lead_score")
         .eq("pipeline_id", "00000000-0000-0000-0000-000000000001");
       if (error) throw error;
       return data as Contact[];
