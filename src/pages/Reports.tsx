@@ -176,7 +176,8 @@ export default function Reports() {
     return { name: dayStr, leads: count };
   });
 
-  const webhookBaseUrl = `${window.location.origin}/api/webhook/`;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const webhookBaseUrl = `${supabaseUrl}/functions/v1/webhook-lead?key=`;
 
   return (
     <div className="p-6 space-y-6 max-w-7xl">
