@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
-import { Plus, Download, Trash2, Filter, Users, Zap } from "lucide-react";
+import { Plus, Download, Trash2, Filter, Users, Zap, Send, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 
 interface SegmentRule {
@@ -20,14 +21,35 @@ interface SegmentRule {
   value: string;
 }
 
+const FIELDS = [
+  { value: "quality", label: "Lead Quality" },
+  { value: "status", label: "Status" },
+  { value: "source", label: "Source" },
+  { value: "lead_score", label: "Lead Score" },
+  { value: "company", label: "Company" },
+  { value: "tags", label: "Tags" },
+];
+
+const OPERATORS = [
+  { value: "eq", label: "Equals" },
+  { value: "neq", label: "Not Equals" },
+  { value: "contains", label: "Contains" },
+  { value: "gt", label: "Greater Than" },
+  { value: "lt", label: "Less Than" },
+];
+
 export default function SmartSegments() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [selectedSegment, setSelectedSegment] = useState<any>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [rules, setRules] = useState<SegmentRule[]>([{ field: "quality", operator: "eq", value: "hot" }]);
   const [autoTag, setAutoTag] = useState("");
+  const [messageContent, setMessageContent] = useState("Hi {{name}}, ");
+  const [messageChannel, setMessageChannel] = useState("whatsapp");
 
   const { data: segments } = useQuery({
     queryKey: ["dynamic-segments"],
@@ -64,10 +86,7 @@ export default function SmartSegments() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dynamic-segments"] });
       setCreateOpen(false);
-      setName("");
-      setDescription("");
-      setRules([{ field: "quality", operator: "eq", value: "hot" }]);
-      setAutoTag("");
+      resetForm();
       toast.success("Segment created");
     },
     onError: (e) => toast.error(e.message),
@@ -83,6 +102,41 @@ export default function SmartSegments() {
       toast.success("Segment deleted");
     },
   });
+
+  const sendSegmentMessage = useMutation({
+    mutationFn: async () => {
+      if (!selectedSegment) return;
+      const segRules = (selectedSegment.rules as any as SegmentRule[]) || [];
+      const matched = matchContacts(segRules);
+      const contactIds = matched.map((c) => c.id);
+
+      if (contactIds.length === 0) throw new Error("No contacts match this segment");
+
+      const { data, error } = await supabase.functions.invoke("segment-message", {
+        body: {
+          segment_id: selectedSegment.id,
+          template_content: messageContent,
+          contact_ids: contactIds,
+          channel: messageChannel,
+        },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      setMessageOpen(false);
+      setMessageContent("Hi {{name}}, ");
+      toast.success(`${data?.sent || 0} messages sent, ${data?.failed || 0} failed`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const resetForm = () => {
+    setName("");
+    setDescription("");
+    setRules([{ field: "quality", operator: "eq", value: "hot" }]);
+    setAutoTag("");
+  };
 
   const matchContacts = (segmentRules: SegmentRule[]) => {
     if (!contacts) return [];
@@ -117,6 +171,11 @@ export default function SmartSegments() {
     toast.success(`Exported ${matched.length} contacts for Meta Ads`);
   };
 
+  const openMessageDialog = (segment: any) => {
+    setSelectedSegment(segment);
+    setMessageOpen(true);
+  };
+
   const addRule = () => setRules([...rules, { field: "status", operator: "eq", value: "lead" }]);
   const removeRule = (i: number) => setRules(rules.filter((_, idx) => idx !== i));
   const updateRule = (i: number, key: keyof SegmentRule, val: string) => {
@@ -124,23 +183,6 @@ export default function SmartSegments() {
     updated[i] = { ...updated[i], [key]: val };
     setRules(updated);
   };
-
-  const FIELDS = [
-    { value: "quality", label: "Lead Quality" },
-    { value: "status", label: "Status" },
-    { value: "source", label: "Source" },
-    { value: "lead_score", label: "Lead Score" },
-    { value: "company", label: "Company" },
-    { value: "tags", label: "Tags" },
-  ];
-
-  const OPERATORS = [
-    { value: "eq", label: "Equals" },
-    { value: "neq", label: "Not Equals" },
-    { value: "contains", label: "Contains" },
-    { value: "gt", label: "Greater Than" },
-    { value: "lt", label: "Less Than" },
-  ];
 
   return (
     <div className="p-6 space-y-6 max-w-5xl">
@@ -164,6 +206,15 @@ export default function SmartSegments() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">{segment.name}</CardTitle>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => openMessageDialog(segment)}
+                      title="Send Message"
+                    >
+                      <Send className="h-3.5 w-3.5" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -227,7 +278,6 @@ export default function SmartSegments() {
               <Label>Description (optional)</Label>
               <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe this segment..." />
             </div>
-
             <div className="space-y-2">
               <Label>Rules</Label>
               {rules.map((rule, i) => (
@@ -256,7 +306,6 @@ export default function SmartSegments() {
                 <Plus className="h-3.5 w-3.5 mr-1" /> Add Rule
               </Button>
             </div>
-
             <div className="space-y-2">
               <Label>Auto-Tag (optional)</Label>
               <Input value={autoTag} onChange={(e) => setAutoTag(e.target.value)} placeholder="e.g., highly-engaged" />
@@ -266,6 +315,61 @@ export default function SmartSegments() {
           <DialogFooter>
             <Button onClick={() => createSegment.mutate()} disabled={!name.trim() || rules.length === 0}>
               Create Segment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Message Dialog */}
+      <Dialog open={messageOpen} onOpenChange={setMessageOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Send Message to Segment
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedSegment && (
+              <div className="p-3 rounded-lg bg-muted">
+                <p className="text-sm font-medium">{selectedSegment.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {matchContacts((selectedSegment.rules as any as SegmentRule[]) || []).length} contacts will receive this message
+                </p>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Channel</Label>
+              <Select value={messageChannel} onValueChange={setMessageChannel}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                  <SelectItem value="sms">SMS</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Message Template</Label>
+              <Textarea
+                value={messageContent}
+                onChange={(e) => setMessageContent(e.target.value)}
+                placeholder="Hi {{name}}, ..."
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground">
+                Use <code className="text-xs bg-muted px-1 rounded">{"{{name}}"}</code> for personalization. Messages are sent with throttling.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMessageOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => sendSegmentMessage.mutate()}
+              disabled={!messageContent.trim() || sendSegmentMessage.isPending}
+            >
+              <Send className="h-4 w-4 mr-2" />
+              {sendSegmentMessage.isPending ? "Sending..." : "Send Messages"}
             </Button>
           </DialogFooter>
         </DialogContent>
