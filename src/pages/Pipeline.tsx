@@ -248,14 +248,20 @@ export default function Pipeline() {
         onDragEnd={handleDragEnd}
       >
         <div className="flex gap-4 overflow-x-auto pb-4">
-          {stages?.map((stage) => (
-            <StageColumn
-              key={stage.id}
-              stage={stage}
-              contacts={contacts?.filter((c) => c.stage_id === stage.id) ?? []}
-              onAddContact={handleAddContact}
-            />
-          ))}
+          {stages?.map((stage) => {
+            let stageContacts = contacts?.filter((c) => c.stage_id === stage.id) ?? [];
+            if (sortBy === "score_desc") stageContacts = [...stageContacts].sort((a, b) => (b.lead_score ?? 0) - (a.lead_score ?? 0));
+            else if (sortBy === "score_asc") stageContacts = [...stageContacts].sort((a, b) => (a.lead_score ?? 0) - (b.lead_score ?? 0));
+            else if (sortBy === "value_desc") stageContacts = [...stageContacts].sort((a, b) => (Number(b.value) || 0) - (Number(a.value) || 0));
+            return (
+              <StageColumn
+                key={stage.id}
+                stage={stage}
+                contacts={stageContacts}
+                onAddContact={handleAddContact}
+              />
+            );
+          })}
         </div>
         <DragOverlay>
           {activeContact && <LeadCard contact={activeContact} />}
