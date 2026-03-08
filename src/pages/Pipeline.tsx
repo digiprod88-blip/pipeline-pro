@@ -33,6 +33,7 @@ type Contact = {
   value: number | null;
   stage_id: string | null;
   status: "lead" | "customer";
+  lead_score: number;
 };
 
 type Stage = {
