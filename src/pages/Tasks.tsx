@@ -206,7 +206,7 @@ export default function Tasks() {
                 </div>
                 <div className="flex items-center gap-2">
                   {task.visible_to_client && (
-                    <Eye className="h-3.5 w-3.5 text-muted-foreground" title="Visible to client" />
+                    <span title="Visible to client"><Eye className="h-3.5 w-3.5 text-muted-foreground" /></span>
                   )}
                   <Badge variant={task.priority === "high" ? "destructive" : task.priority === "low" ? "secondary" : "outline"} className="text-xs capitalize">
                     {task.priority}
