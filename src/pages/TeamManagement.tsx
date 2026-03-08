@@ -143,9 +143,13 @@ export default function TeamManagement() {
           <h1 className="text-2xl font-semibold">Team Management</h1>
           <p className="text-sm text-muted-foreground">Manage staff accounts and permissions</p>
         </div>
-        <Button onClick={() => setInviteOpen(true)}>
+        <Button onClick={() => { setInviteAsClient(false); setInviteOpen(true); }}>
           <UserPlus className="h-4 w-4 mr-2" />
           Invite Staff
+        </Button>
+        <Button variant="outline" onClick={() => { setInviteAsClient(true); setInviteOpen(true); }}>
+          <UserPlus className="h-4 w-4 mr-2" />
+          Invite Client
         </Button>
       </div>
 
