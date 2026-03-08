@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.lms-webhook]
 verify_jwt = false
+
+[functions.social-publish]
+verify_jwt = false
