@@ -21,6 +21,7 @@ import { format, subDays, isAfter, startOfWeek } from "date-fns";
 import { motion } from "framer-motion";
 import { ConversionFunnel } from "@/components/reports/ConversionFunnel";
 import { RevenueChart } from "@/components/reports/RevenueChart";
+import { ROIDashboard } from "@/components/reports/ROIDashboard";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--info))", "hsl(var(--warning))", "hsl(var(--success))", "hsl(var(--destructive))", "hsl(var(--accent-foreground))"];
 
