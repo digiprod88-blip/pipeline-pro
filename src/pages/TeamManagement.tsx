@@ -41,6 +41,7 @@ export default function TeamManagement() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<string>("staff");
+  const [inviteAsClient, setInviteAsClient] = useState(false);
 
   // Check if current user is admin
   const { data: currentRole } = useQuery({
