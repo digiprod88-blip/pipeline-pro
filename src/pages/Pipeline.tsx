@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { AddContactDialog } from "@/components/contacts/AddContactDialog";
+import LeadScoreBadge from "@/components/dashboard/LeadScoreBadge";
 
 type Contact = {
   id: string;
