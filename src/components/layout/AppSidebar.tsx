@@ -19,6 +19,8 @@ const navItems = [
   { label: "Calendar", icon: CalendarDays, path: "/calendar" },
   { label: "Calls", icon: Phone, path: "/calls" },
   { label: "Shop", icon: ShoppingCart, path: "/shop" },
+  { label: "Sites", icon: Globe, path: "/sites" },
+  { label: "Links", icon: Link2, path: "/links" },
   { label: "Reports", icon: BarChart3, path: "/reports" },
   { label: "Team", icon: UserCog, path: "/team" },
   { label: "Settings", icon: Settings, path: "/settings" },
