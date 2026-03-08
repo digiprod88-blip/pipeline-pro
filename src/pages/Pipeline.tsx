@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { AddContactDialog } from "@/components/contacts/AddContactDialog";
+import LeadScoreBadge from "@/components/dashboard/LeadScoreBadge";
 
 type Contact = {
   id: string;
@@ -32,6 +33,7 @@ type Contact = {
   value: number | null;
   stage_id: string | null;
   status: "lead" | "customer";
+  lead_score: number;
 };
 
 type Stage = {
@@ -82,6 +84,12 @@ function LeadCard({ contact, isDragging }: { contact: Contact; isDragging?: bool
           {contact.value && Number(contact.value) > 0 && (
             <p className="text-xs text-muted-foreground mt-2">${Number(contact.value).toLocaleString()}</p>
           )}
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium">
+              {contact.first_name[0]}
+            </div>
+            <LeadScoreBadge score={contact.lead_score ?? 0} />
+          </div>
         </CardContent>
       </Card>
     </div>
@@ -155,7 +163,7 @@ export default function Pipeline() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("contacts")
-        .select("id, first_name, last_name, email, company, quality, value, stage_id, status")
+        .select("id, first_name, last_name, email, company, quality, value, stage_id, status, lead_score")
         .eq("pipeline_id", "00000000-0000-0000-0000-000000000001");
       if (error) throw error;
       return data as Contact[];

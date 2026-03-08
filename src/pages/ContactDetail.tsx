@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Mail, Phone, Building, Calendar, DollarSign, Tag } from "lucide-react";
+import { ArrowLeft, Mail, Phone, Building, Calendar, DollarSign, Tag, TrendingUp, MessageSquare, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { UnifiedInbox } from "@/components/contacts/UnifiedInbox";
 import { ContactTimeline } from "@/components/contacts/ContactTimeline";
+import LeadScoreBadge from "@/components/dashboard/LeadScoreBadge";
 
 export default function ContactDetail() {
   const { id } = useParams<{ id: string }>();
@@ -39,6 +40,23 @@ export default function ContactDetail() {
       const { data, error } = await supabase.from("tasks").select("*").eq("contact_id", id!).order("created_at", { ascending: false });
       if (error) throw error;
       return data;
+    },
+    enabled: !!id,
+  });
+
+  const { data: scoreBreakdown } = useQuery({
+    queryKey: ["score-breakdown", id],
+    queryFn: async () => {
+      const [{ count: activityCount }, { count: messageCount }, { count: inboundCount }] = await Promise.all([
+        supabase.from("activities").select("*", { count: "exact", head: true }).eq("contact_id", id!),
+        supabase.from("messages").select("*", { count: "exact", head: true }).eq("contact_id", id!),
+        supabase.from("messages").select("*", { count: "exact", head: true }).eq("contact_id", id!).eq("direction", "inbound"),
+      ]);
+      return {
+        activities: activityCount ?? 0,
+        messages: messageCount ?? 0,
+        inbound: inboundCount ?? 0,
+      };
     },
     enabled: !!id,
   });
@@ -90,6 +108,7 @@ export default function ContactDetail() {
           <div>
             <h1 className="text-2xl font-semibold">{contact.first_name} {contact.last_name}</h1>
             <div className="flex items-center gap-2 mt-1">
+              <LeadScoreBadge score={contact.lead_score ?? 0} />
               <Badge variant={contact.status === "customer" ? "success" : "secondary"} className="capitalize">{contact.status}</Badge>
               {contact.quality && (
                 <Badge variant={contact.quality === "hot" ? "hot" : contact.quality === "warm" ? "warm" : "cold"} className="capitalize">{contact.quality}</Badge>
@@ -129,6 +148,48 @@ export default function ContactDetail() {
               <CardContent><p className="text-sm text-muted-foreground">{contact.notes}</p></CardContent>
             </Card>
           )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Score Breakdown
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Overall Score</span>
+                <LeadScoreBadge score={contact.lead_score ?? 0} />
+              </div>
+              <div className="h-px bg-border" />
+              <div className="space-y-1.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><Activity className="h-3 w-3" />Activities ({scoreBreakdown?.activities ?? 0})</span>
+                  <span className="font-medium">+{(scoreBreakdown?.activities ?? 0) * 10}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><MessageSquare className="h-3 w-3" />Inbound messages ({scoreBreakdown?.inbound ?? 0})</span>
+                  <span className="font-medium">+{(scoreBreakdown?.inbound ?? 0) * 20}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><MessageSquare className="h-3 w-3" />Outbound messages ({(scoreBreakdown?.messages ?? 0) - (scoreBreakdown?.inbound ?? 0)})</span>
+                  <span className="font-medium">+{((scoreBreakdown?.messages ?? 0) - (scoreBreakdown?.inbound ?? 0)) * 5}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><Mail className="h-3 w-3" />Has email</span>
+                  <span className="font-medium">{contact.email ? "+10" : "0"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><Phone className="h-3 w-3" />Has phone</span>
+                  <span className="font-medium">{contact.phone ? "+10" : "0"}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><TrendingUp className="h-3 w-3" />Quality bonus ({contact.quality})</span>
+                  <span className="font-medium">+{contact.quality === "hot" ? 30 : contact.quality === "warm" ? 15 : 0}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           <Card>
             <CardHeader><CardTitle className="text-sm">Tasks ({contactTasks?.length ?? 0})</CardTitle></CardHeader>
