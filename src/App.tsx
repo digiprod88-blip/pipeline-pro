@@ -15,6 +15,10 @@ import Tasks from "./pages/Tasks";
 import Settings from "./pages/Settings";
 import TeamManagement from "./pages/TeamManagement";
 import Reports from "./pages/Reports";
+import Workflows from "./pages/Workflows";
+import CalendarPage from "./pages/CalendarPage";
+import CallManagement from "./pages/CallManagement";
+import Shop from "./pages/Shop";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
