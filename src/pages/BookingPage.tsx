@@ -260,9 +260,19 @@ export default function BookingPage() {
                 <Label>Notes</Label>
                 <Textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} placeholder="What would you like to discuss?" />
               </div>
+              <div>
+                <Label>Security Check: {captcha.question}</Label>
+                <Input
+                  type="number"
+                  value={captcha.answer}
+                  onChange={(e) => captcha.setAnswer(e.target.value)}
+                  placeholder="Your answer"
+                  className="mt-1"
+                />
+              </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => setStep("date")} className="flex-1">Back</Button>
-                <Button onClick={handleBook} disabled={loading || !form.name || !form.email} className="flex-1">
+                <Button onClick={handleBook} disabled={loading || !form.name || !form.email || !captcha.isValid} className="flex-1">
                   {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   Confirm Booking
                 </Button>
