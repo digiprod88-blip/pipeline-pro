@@ -108,21 +108,22 @@ export async function exportLeadDetails(contacts: Contact[]) {
 }
 
 export async function exportInteractionHistory(contactIds: string[]) {
-  // Fetch messages for selected contacts
-  const { data: messages } = await supabase
-    .from("messages")
-    .select("*")
-    .in("contact_id", contactIds)
-    .order("created_at", { ascending: false })
-    .limit(1000);
+  // Fetch in batches to avoid hitting the 1000 row limit
+  const BATCH_SIZE = 50;
+  let allMessages: any[] = [];
+  let allActivities: any[] = [];
 
-  // Fetch activities for selected contacts
-  const { data: activities } = await supabase
-    .from("activities")
-    .select("*")
-    .in("contact_id", contactIds)
-    .order("created_at", { ascending: false })
-    .limit(1000);
+  for (let i = 0; i < contactIds.length; i += BATCH_SIZE) {
+    const batch = contactIds.slice(i, i + BATCH_SIZE);
+
+    const [msgResult, actResult] = await Promise.all([
+      supabase.from("messages").select("*").in("contact_id", batch).order("created_at", { ascending: false }),
+      supabase.from("activities").select("*").in("contact_id", batch).order("created_at", { ascending: false }),
+    ]);
+
+    if (msgResult.data) allMessages = allMessages.concat(msgResult.data);
+    if (actResult.data) allActivities = allActivities.concat(actResult.data);
+  }
 
   const headers = [
     "Contact ID",
