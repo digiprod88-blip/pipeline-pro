@@ -93,6 +93,13 @@ export function CheckoutButton({ product, shopSettings }: CheckoutButtonProps) {
                 toast.error("Payment verification failed");
               } else {
                 toast.success("Payment successful! 🎉");
+                // Fire Meta Purchase pixel
+                if (typeof (window as any).fbq === "function") {
+                  (window as any).fbq("track", "Purchase", {
+                    value: product.price,
+                    currency: product.currency,
+                  });
+                }
                 setOpen(false);
               }
             },
