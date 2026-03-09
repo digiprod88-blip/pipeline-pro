@@ -155,6 +155,9 @@ export default function Workflows() {
     setActions(prev => prev.map((a, i) => i === index ? { ...a, action_config: { ...a.action_config, [key]: value } } : a));
   };
 
+  // Check if workflow has high-frequency risk (wait actions with 100+ potential recipients)
+  const hasHighFrequencyRisk = actions.some(a => a.action_type === "send_whatsapp") && actions.every(a => a.action_type !== "wait" || a.delay_minutes < 1);
+
   const renderActionEditor = (action: WorkflowAction, i: number) => {
     switch (action.action_type) {
       case "wait":
