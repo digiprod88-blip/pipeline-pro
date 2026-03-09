@@ -237,6 +237,12 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
                   <TabsTrigger value="advanced" className="text-xs"><Settings2 className="h-3 w-3 mr-1" />Advanced</TabsTrigger>
                 </TabsList>
                 <TabsContent value="content" className="space-y-4 mt-0">
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setShowAiModal(true)} className="text-xs">
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Ask AI
+                    </Button>
+                  </div>
                   {Object.entries(selectedBlockData.content).map(([key, value]) => (
                     <div key={key} className="space-y-1">
                       <label className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1").replace(/(\d+)/g, " $1")}</label>
