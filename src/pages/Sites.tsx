@@ -76,11 +76,11 @@ export default function Sites() {
   });
 
   const saveBlocksMutation = useMutation({
-    mutationFn: async ({ id, blocks }: { id: string; blocks: PageBlock[] }) => {
+    mutationFn: async ({ id, blocks }: { id: string; blocks: PageBlock[] | PageSection[] }) => {
       const { error } = await supabase.from("landing_pages").update({ content: blocks as any }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["landing-pages"] }); toast.success("Page blocks saved"); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["landing-pages"] }); toast.success("Page saved"); },
     onError: (e: any) => toast.error(e.message),
   });
 
