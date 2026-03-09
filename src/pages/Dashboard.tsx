@@ -161,11 +161,18 @@ export default function Dashboard() {
         </motion.div>
       </div>
 
-      {/* Team Leaderboard */}
-      <TeamLeaderboard />
+      {/* Priority Leads & Analytics Row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <HotLeadsWidget />
+        <ConversionFunnel steps={[
+          { label: "Visitors", count: contacts?.length || 0, color: "hsl(var(--primary))" },
+          { label: "Leads", count: totalLeads, color: "hsl(var(--warning))" },
+          { label: "Customers", count: totalCustomers, color: "hsl(var(--success))" },
+        ]} />
+      </div>
 
-      {/* Priority Leads */}
-      <HotLeadsWidget />
+      {/* ROI Analytics */}
+      <ROIDashboard dateRange="30" />
 
       {/* Follow-ups & Recent Leads */}
       <div className="grid gap-6 lg:grid-cols-2">
