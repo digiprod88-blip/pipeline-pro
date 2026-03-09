@@ -233,6 +233,15 @@ export default function TeamManagement() {
                         disabled={isCurrentUser}
                       />
                     </TableCell>
+                    <TableCell>
+                      <Switch
+                        checked={member.hide_finance}
+                        onCheckedChange={(checked) =>
+                          updateRole.mutate({ id: member.id, updates: { hide_finance: checked } })
+                        }
+                        disabled={isCurrentUser}
+                      />
+                    </TableCell>
                   </TableRow>
                 );
               })}
