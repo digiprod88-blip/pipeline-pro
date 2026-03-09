@@ -39,6 +39,16 @@ export default function Shop() {
     },
   });
 
+  const { data: shopSettings } = useQuery({
+    queryKey: ["shop-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("shop_settings").select("*").eq("user_id", user!.id).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const { data: orders } = useQuery({
     queryKey: ["orders"],
     queryFn: async () => {
