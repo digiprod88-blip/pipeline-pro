@@ -107,7 +107,7 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="general" className="gap-1.5">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">General</span>
@@ -118,7 +118,7 @@ export default function Settings() {
           </TabsTrigger>
           <TabsTrigger value="leadmapping" className="gap-1.5">
             <Map className="h-4 w-4" />
-            <span className="hidden sm:inline">Lead Mapping</span>
+            <span className="hidden sm:inline">Leads</span>
           </TabsTrigger>
           <TabsTrigger value="variables" className="gap-1.5">
             <Variable className="h-4 w-4" />
@@ -127,6 +127,10 @@ export default function Settings() {
           <TabsTrigger value="whatsapp" className="gap-1.5">
             <MessageCircle className="h-4 w-4" />
             <span className="hidden sm:inline">WhatsApp</span>
+          </TabsTrigger>
+          <TabsTrigger value="pixel" className="gap-1.5">
+            <Target className="h-4 w-4" />
+            <span className="hidden sm:inline">Pixels</span>
           </TabsTrigger>
         </TabsList>
 
