@@ -109,7 +109,7 @@ export default function CalendarPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       setOpenAppt(false);
-      setApptForm({ title: "", description: "", start_time: "", end_time: "", location: "", createZoom: false });
+      setApptForm({ title: "", description: "", start_time: "", end_time: "", location: "", createZoom: false, meetingType: "physical", zoomLink: "", minNoticeHours: 2 });
       setSelectedContact("");
       toast.success("Appointment created!");
     },
