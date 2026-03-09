@@ -145,6 +145,7 @@ export default function Contacts() {
           <p className="text-sm text-muted-foreground">{contacts?.length ?? 0} total contacts</p>
         </div>
         <div className="flex gap-2">
+          {canExport && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
@@ -175,6 +176,7 @@ export default function Contacts() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          )}
           <Button variant="outline" onClick={() => setCsvDialogOpen(true)}>
             <Upload className="h-4 w-4 mr-2" />Import CSV
           </Button>
