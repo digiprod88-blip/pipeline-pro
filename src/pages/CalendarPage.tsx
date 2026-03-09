@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, CalendarDays, Clock, MapPin, Trash2, Copy } from "lucide-react";
+import { Plus, CalendarDays, Clock, MapPin, Trash2, Copy, Video, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfDay, endOfDay, addHours, isSameDay } from "date-fns";
 
