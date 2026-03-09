@@ -24,7 +24,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  ArrowLeft, Save, Plus, Type, Image, Star, MessageSquare, Layout, Zap, FormInput, Settings2, Code,
+  ArrowLeft, Save, Plus, Type, Image, Star, MessageSquare, Layout, Zap, FormInput, Settings2, Code, Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
