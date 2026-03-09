@@ -109,6 +109,50 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
     if (selectedBlock === blockId) setSelectedBlock(null);
   };
 
+  const generateWithAi = async () => {
+    if (!aiPrompt.trim()) return;
+    setAiLoading(true);
+    try {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/ai-landing-page`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${anonKey}`,
+        },
+        body: JSON.stringify({ prompt: aiPrompt }),
+      });
+      if (!response.ok) throw new Error("Failed to generate content");
+      const data = await response.json();
+      
+      if (selectedBlock) {
+        const block = blocks.find(b => b.id === selectedBlock);
+        if (!block) return;
+        
+        // Map AI response to block content
+        const newContent = { ...block.content };
+        if (data.headline) newContent.headline = data.headline;
+        if (data.subheadline) newContent.subheadline = data.subheadline;
+        if (data.cta_text) newContent.buttonText = data.cta_text;
+        if (data.sections?.[0]) {
+          newContent.heading = data.sections[0].title;
+          newContent.body = data.sections[0].content;
+        }
+        
+        setBlocks(prev => prev.map(b => b.id === selectedBlock ? { ...b, content: newContent } : b));
+        toast.success("AI content generated!");
+      }
+      setShowAiModal(false);
+      setAiPrompt("");
+    } catch (e) {
+      toast.error("Failed to generate AI content");
+      console.error(e);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const selectedBlockData = blocks.find((b) => b.id === selectedBlock);
 
   return (
