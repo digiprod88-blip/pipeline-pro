@@ -8,10 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link2, Trash2, Users, Store, Map, Settings2 } from "lucide-react";
+import { Link2, Trash2, Users, Store, Map, Settings2, Variable, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AppStoreIntegrations } from "@/components/settings/AppStoreIntegrations";
 import { LeadFormMapping } from "@/components/settings/LeadFormMapping";
+import { DynamicVariables } from "@/components/settings/DynamicVariables";
+import { WhatsAppQRConnection } from "@/components/settings/WhatsAppQRConnection";
 
 export default function Settings() {
   const { user } = useAuth();
