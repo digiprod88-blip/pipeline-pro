@@ -1,13 +1,14 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Kanban, CheckSquare, Settings, LogOut,
-  Search, UserCog, BarChart3, FolderOpen, Zap, CalendarDays, Phone, ShoppingCart, Globe, Link2, Sparkles, Target, Send, Shield,
+  Search, UserCog, BarChart3, FolderOpen, Zap, CalendarDays, Phone, ShoppingCart, Globe, Link2, Sparkles, Target, Send, Shield, Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
