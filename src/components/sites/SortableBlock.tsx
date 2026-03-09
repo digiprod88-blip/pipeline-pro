@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, Layout, Zap, Star, MessageSquare, Type, Image } from "lucide-react";
+import { GripVertical, Trash2, Layout, Zap, Star, MessageSquare, Type, Image, FormInput } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { PageBlock, BlockType } from "./PageBuilder";
@@ -12,6 +12,7 @@ const BLOCK_ICONS: Record<BlockType, React.ElementType> = {
   testimonials: MessageSquare,
   text: Type,
   image: Image,
+  popup_form: FormInput,
 };
 
 const BLOCK_LABELS: Record<BlockType, string> = {
@@ -21,6 +22,7 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   testimonials: "Testimonials",
   text: "Text Block",
   image: "Image + Text",
+  popup_form: "Popup Form",
 };
 
 function BlockPreview({ block }: { block: PageBlock }) {
