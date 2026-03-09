@@ -76,7 +76,7 @@ export default function TeamManagement() {
 
   // Update role
   const updateRole = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: { role?: string; hide_phone?: boolean; pipeline_access?: string } }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: { role?: string; hide_phone?: boolean; hide_finance?: boolean; pipeline_access?: string } }) => {
       const { error } = await supabase
         .from("user_roles")
         .update(updates as any)
