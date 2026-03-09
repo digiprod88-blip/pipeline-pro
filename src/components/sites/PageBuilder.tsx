@@ -99,6 +99,12 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
     );
   };
 
+  const updateBlockAdvanced = (blockId: string, advanced: BlockAdvancedSettings) => {
+    setBlocks((prev) =>
+      prev.map((b) => (b.id === blockId ? { ...b, advanced } : b))
+    );
+  };
+
   const removeBlock = (blockId: string) => {
     setBlocks((prev) => prev.filter((b) => b.id !== blockId));
     if (selectedBlock === blockId) setSelectedBlock(null);
