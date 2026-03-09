@@ -31,6 +31,7 @@ export default function BookingPage() {
   const [step, setStep] = useState<"date" | "details" | "done">("date");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", notes: "" });
+  const [zoomLink, setZoomLink] = useState<string | null>(null);
   const captcha = useMathChallenge();
 
   const { data: slots } = useQuery({
@@ -141,9 +142,13 @@ export default function BookingPage() {
           notes: form.notes || null,
           start_time: startTime.toISOString(),
           end_time: endTime.toISOString(),
+          create_zoom: true,
         },
       });
       if (res.error) throw res.error;
+      if (res.data?.zoom_link) {
+        setZoomLink(res.data.zoom_link);
+      }
       setStep("done");
       toast.success("Appointment booked!");
     } catch (err: any) {
@@ -167,6 +172,12 @@ export default function BookingPage() {
             at <span className="font-medium text-foreground">{selectedSlot}</span> has been confirmed.
           </p>
           <p className="text-xs text-muted-foreground mt-4">A confirmation will be sent to {form.email}</p>
+          {zoomLink && (
+            <div className="mt-4 p-3 rounded-lg bg-secondary text-sm">
+              <p className="font-medium mb-1">📹 Zoom Meeting Link:</p>
+              <a href={zoomLink} target="_blank" rel="noopener noreferrer" className="text-primary underline break-all">{zoomLink}</a>
+            </div>
+          )}
         </Card>
       </div>
     );
