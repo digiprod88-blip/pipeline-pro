@@ -165,6 +165,7 @@ export default function TeamManagement() {
                 <TableHead>Role</TableHead>
                 <TableHead>Pipeline Access</TableHead>
                 <TableHead>Hide Phone</TableHead>
+                <TableHead>Hide Finance</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
