@@ -231,7 +231,7 @@ export default function Contacts() {
                 <TableRow key={contact.id} className="cursor-pointer hover:bg-accent/50" onClick={() => navigate(`/contacts/${contact.id}`)}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
-                      <div className={`h-8 w-1 rounded-full ${hasPaidOrder ? "bg-success" : "bg-destructive"}`} />
+                      <div className={`h-8 w-1 rounded-full ${hasPaidOrder ? "bg-success/60" : "bg-destructive/40"}`} />
                       {contact.first_name} {contact.last_name}
                     </div>
                   </TableCell>

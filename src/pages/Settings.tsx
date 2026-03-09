@@ -16,6 +16,50 @@ import { DynamicVariables } from "@/components/settings/DynamicVariables";
 import { WhatsAppQRConnection } from "@/components/settings/WhatsAppQRConnection";
 import { MetaPixelSettings } from "@/components/settings/MetaPixelSettings";
 
+function DnsTestButton() {
+  const [domain, setDomain] = useState("");
+  const [testing, setTesting] = useState(false);
+  const [result, setResult] = useState<"success" | "fail" | null>(null);
+
+  const testDns = async () => {
+    if (!domain.trim()) return toast.error("Enter your domain first");
+    setTesting(true);
+    setResult(null);
+    try {
+      const res = await fetch(`https://dns.google/resolve?name=${domain.trim()}&type=A`);
+      const data = await res.json();
+      const answers = data.Answer ?? [];
+      const pointsToLovable = answers.some((a: any) => a.data === "185.158.133.1");
+      setResult(pointsToLovable ? "success" : "fail");
+      if (pointsToLovable) toast.success("DNS is correctly pointing to this CRM!");
+      else toast.error("DNS does not point to 185.158.133.1 yet. Please check your records.");
+    } catch {
+      setResult("fail");
+      toast.error("Could not check DNS. Try again later.");
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-3 pt-2 border-t border-border">
+      <h3 className="text-sm font-semibold">Test DNS Connection</h3>
+      <div className="flex gap-2">
+        <Input placeholder="yourdomain.com" value={domain} onChange={(e) => setDomain(e.target.value)} className="max-w-xs" />
+        <Button variant="outline" onClick={testDns} disabled={testing}>
+          {testing ? "Checking…" : "Test Connection"}
+        </Button>
+      </div>
+      {result === "success" && (
+        <div className="flex items-center gap-2 text-success text-sm"><CheckCircle className="h-4 w-4" />DNS verified — SSL will be provisioned automatically.</div>
+      )}
+      {result === "fail" && (
+        <div className="flex items-center gap-2 text-destructive text-sm"><Globe className="h-4 w-4" />DNS not yet pointing correctly. Allow up to 72 hours for propagation.</div>
+      )}
+    </div>
+  );
+}
+
 export default function Settings() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
