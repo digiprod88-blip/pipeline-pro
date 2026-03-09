@@ -1,13 +1,14 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Kanban, CheckSquare, Settings, LogOut,
-  Search, UserCog, BarChart3, FolderOpen, Zap, CalendarDays, Phone, ShoppingCart, Globe, Link2, Sparkles, Target, Send, Shield,
+  Search, UserCog, BarChart3, FolderOpen, Zap, CalendarDays, Phone, ShoppingCart, Globe, Link2, Sparkles, Target, Send, Shield, Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
@@ -33,6 +34,7 @@ const navItems = [
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { canInstall, install } = usePWAInstall();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -79,7 +81,16 @@ export function AppSidebar() {
         })}
       </nav>
 
-      <div className="border-t border-sidebar-border p-2.5">
+      <div className="border-t border-sidebar-border p-2.5 space-y-1">
+        {canInstall && (
+          <Button
+            variant="outline"
+            className="w-full justify-start gap-2.5 text-xs h-8 border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+            onClick={install}
+          >
+            <Download className="h-3.5 w-3.5" />Install App
+          </Button>
+        )}
         <Button variant="ghost" className="w-full justify-start gap-2.5 text-xs text-muted-foreground hover:text-foreground h-8" onClick={handleLogout}>
           <LogOut className="h-3.5 w-3.5" />Sign out
         </Button>
