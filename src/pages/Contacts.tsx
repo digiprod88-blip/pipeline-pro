@@ -134,30 +134,47 @@ export default function Contacts() {
           <p className="text-sm text-muted-foreground">{contacts?.length ?? 0} total contacts</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (!contacts?.length) return toast.error("No contacts to export");
-              downloadCSV(
-                contacts.map(c => ({
-                  Name: `${c.first_name} ${c.last_name || ""}`.trim(),
-                  Email: c.email || "",
-                  Phone: c.phone || "",
-                  Company: c.company || "",
-                  Status: c.status,
-                  Quality: c.quality || "",
-                  Value: c.value || 0,
-                  Source: c.source || "",
-                  Created: c.created_at,
-                })),
-                `contacts-${new Date().toISOString().slice(0, 10)}`
-              );
-              toast.success("CSV downloaded!");
-            }}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+                <ChevronDown className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={async () => {
+                  if (!contacts?.length) return toast.error("No contacts to export");
+                  const count = await exportLeadDetails(contacts);
+                  toast.success(`Exported ${count} leads`);
+                }}
+              >
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Lead Details (CSV)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={async () => {
+                  if (!contacts?.length) return toast.error("No contacts to export");
+                  const count = await exportInteractionHistory(contacts.map(c => c.id));
+                  toast.success(`Exported ${count} interactions`);
+                }}
+              >
+                <History className="h-4 w-4 mr-2" />
+                Interaction History
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={async () => {
+                  if (!contacts?.length) return toast.error("No contacts to export");
+                  await exportFullReport(contacts);
+                  toast.success("Full report exported");
+                }}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Full Report (Both)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="outline" onClick={() => setCsvDialogOpen(true)}>
             <Upload className="h-4 w-4 mr-2" />
             Import CSV

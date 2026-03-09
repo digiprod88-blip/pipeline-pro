@@ -61,31 +61,18 @@ export function PopupFormModal({ open, onOpenChange, pageId, formConfig, onSucce
         throw new Error("Failed to submit form");
       }
 
-      // Increment leads count on the landing page
-      await supabase
+      // Increment leads count on the landing page (best effort)
+      const { data: pageData } = await supabase
         .from("landing_pages")
-        .update({ leads_count: supabase.rpc ? undefined : undefined }) // Will use SQL increment
+        .select("leads_count")
         .eq("id", pageId)
-        .then(() => {})
-        .catch(() => {});
+        .single();
       
-      // Alternative: direct increment via raw update
-      try {
+      if (pageData) {
         await supabase
           .from("landing_pages")
-          .select("leads_count")
-          .eq("id", pageId)
-          .single()
-          .then(async ({ data }) => {
-            if (data) {
-              await supabase
-                .from("landing_pages")
-                .update({ leads_count: (data.leads_count || 0) + 1 })
-                .eq("id", pageId);
-            }
-          });
-      } catch {
-        // Ignore errors
+          .update({ leads_count: (pageData.leads_count || 0) + 1 })
+          .eq("id", pageId);
       }
     },
     onSuccess: () => {
