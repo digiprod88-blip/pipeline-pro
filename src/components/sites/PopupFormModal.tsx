@@ -62,9 +62,31 @@ export function PopupFormModal({ open, onOpenChange, pageId, formConfig, onSucce
       }
 
       // Increment leads count on the landing page
-      await supabase.rpc("increment_landing_page_leads", { page_id: pageId }).catch(() => {
-        // RPC might not exist, ignore
-      });
+      await supabase
+        .from("landing_pages")
+        .update({ leads_count: supabase.rpc ? undefined : undefined }) // Will use SQL increment
+        .eq("id", pageId)
+        .then(() => {})
+        .catch(() => {});
+      
+      // Alternative: direct increment via raw update
+      try {
+        await supabase
+          .from("landing_pages")
+          .select("leads_count")
+          .eq("id", pageId)
+          .single()
+          .then(async ({ data }) => {
+            if (data) {
+              await supabase
+                .from("landing_pages")
+                .update({ leads_count: (data.leads_count || 0) + 1 })
+                .eq("id", pageId);
+            }
+          });
+      } catch {
+        // Ignore errors
+      }
     },
     onSuccess: () => {
       toast.success("Thank you! We'll be in touch soon.");

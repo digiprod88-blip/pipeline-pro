@@ -217,6 +217,14 @@ export default function Settings() {
         <TabsContent value="leadmapping" className="mt-6">
           <LeadFormMapping />
         </TabsContent>
+
+        <TabsContent value="variables" className="mt-6">
+          <DynamicVariables />
+        </TabsContent>
+
+        <TabsContent value="whatsapp" className="mt-6">
+          <WhatsAppQRConnection />
+        </TabsContent>
       </Tabs>
     </div>
   );

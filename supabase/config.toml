@@ -17,3 +17,9 @@ verify_jwt = false
 
 [functions.social-publish]
 verify_jwt = false
+
+[functions.whatsapp-qr]
+verify_jwt = false
+
+[functions.workflow-cron]
+verify_jwt = false
