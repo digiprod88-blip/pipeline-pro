@@ -61,6 +61,40 @@ export default function CalendarPage() {
 
   const createAppointment = useMutation({
     mutationFn: async () => {
+      let location = apptForm.location || null;
+
+      // Create Zoom meeting if requested
+      if (apptForm.createZoom && apptForm.start_time) {
+        setIsCreatingZoom(true);
+        try {
+          const startTime = new Date(apptForm.start_time);
+          const endTime = apptForm.end_time ? new Date(apptForm.end_time) : addHours(startTime, 1);
+          const duration = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
+
+          const { data, error } = await supabase.functions.invoke("zoom-meeting", {
+            body: {
+              action: "create",
+              topic: apptForm.title,
+              start_time: startTime.toISOString(),
+              duration,
+              agenda: apptForm.description || "",
+            },
+          });
+
+          if (error) {
+            console.error("Zoom error:", error);
+            toast.error("Zoom meeting creation failed, continuing without link");
+          } else if (data?.join_url) {
+            location = data.join_url;
+            toast.success("Zoom meeting created!");
+          }
+        } catch (err) {
+          console.error("Zoom error:", err);
+        } finally {
+          setIsCreatingZoom(false);
+        }
+      }
+
       const { error } = await supabase.from("appointments").insert({
         user_id: user!.id,
         contact_id: selectedContact || null,
@@ -68,14 +102,14 @@ export default function CalendarPage() {
         description: apptForm.description || null,
         start_time: apptForm.start_time,
         end_time: apptForm.end_time,
-        location: apptForm.location || null,
+        location,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       setOpenAppt(false);
-      setApptForm({ title: "", description: "", start_time: "", end_time: "", location: "" });
+      setApptForm({ title: "", description: "", start_time: "", end_time: "", location: "", createZoom: false });
       setSelectedContact("");
       toast.success("Appointment created!");
     },
