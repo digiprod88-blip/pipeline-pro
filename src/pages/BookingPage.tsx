@@ -31,6 +31,7 @@ export default function BookingPage() {
   const [step, setStep] = useState<"date" | "details" | "done">("date");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", phone: "", notes: "" });
+  const [zoomLink, setZoomLink] = useState<string | null>(null);
   const captcha = useMathChallenge();
 
   const { data: slots } = useQuery({
