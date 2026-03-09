@@ -195,21 +195,42 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
         <>
           {/* Desktop: inline panel */}
           <div className="hidden md:block border-l border-border bg-card shrink-0 w-[320px] overflow-y-auto">
-            <div className="p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold capitalize">{selectedBlockData.type} Settings</h3>
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold capitalize">{selectedBlockData.type.replace("_", " ")} Settings</h3>
                 <Button variant="ghost" size="sm" onClick={() => setSelectedBlock(null)}>✕</Button>
               </div>
-              {Object.entries(selectedBlockData.content).map(([key, value]) => (
-                <div key={key} className="space-y-1">
-                  <label className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1").replace(/(\d+)/g, " $1")}</label>
-                  {value.length > 60 || key === "body" ? (
-                    <Textarea value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} rows={3} className="text-sm" />
-                  ) : (
-                    <Input value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} className="text-sm" />
-                  )}
-                </div>
-              ))}
+              
+              <Tabs defaultValue="content" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
+                  <TabsTrigger value="advanced" className="text-xs">
+                    <Settings2 className="h-3 w-3 mr-1" />
+                    Advanced
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="content" className="space-y-4 mt-0">
+                  {Object.entries(selectedBlockData.content).map(([key, value]) => (
+                    <div key={key} className="space-y-1">
+                      <label className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1").replace(/(\d+)/g, " $1")}</label>
+                      {value.length > 60 || key === "body" ? (
+                        <Textarea value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} rows={3} className="text-sm" />
+                      ) : (
+                        <Input value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} className="text-sm" />
+                      )}
+                    </div>
+                  ))}
+                </TabsContent>
+                
+                <TabsContent value="advanced" className="mt-0">
+                  <BlockAdvancedSettingsPanel
+                    settings={selectedBlockData.advanced || {}}
+                    onChange={(advanced) => updateBlockAdvanced(selectedBlockData.id, advanced)}
+                    blockType={selectedBlockData.type}
+                  />
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
 
@@ -217,20 +238,35 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
           <Sheet open={!!selectedBlockData} onOpenChange={(open) => { if (!open) setSelectedBlock(null); }}>
             <SheetContent side="bottom" className="md:hidden max-h-[70vh] overflow-y-auto rounded-t-2xl">
               <SheetHeader>
-                <SheetTitle className="capitalize">{selectedBlockData.type} Settings</SheetTitle>
+                <SheetTitle className="capitalize">{selectedBlockData.type.replace("_", " ")} Settings</SheetTitle>
               </SheetHeader>
-              <div className="space-y-4 pt-4 pb-6">
-                {Object.entries(selectedBlockData.content).map(([key, value]) => (
-                  <div key={key} className="space-y-1">
-                    <label className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1").replace(/(\d+)/g, " $1")}</label>
-                    {value.length > 60 || key === "body" ? (
-                      <Textarea value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} rows={3} className="text-sm" />
-                    ) : (
-                      <Input value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} className="text-sm" />
-                    )}
-                  </div>
-                ))}
-              </div>
+              <Tabs defaultValue="content" className="w-full pt-4">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
+                  <TabsTrigger value="advanced" className="text-xs">Advanced</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="content" className="space-y-4 pb-6">
+                  {Object.entries(selectedBlockData.content).map(([key, value]) => (
+                    <div key={key} className="space-y-1">
+                      <label className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1").replace(/(\d+)/g, " $1")}</label>
+                      {value.length > 60 || key === "body" ? (
+                        <Textarea value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} rows={3} className="text-sm" />
+                      ) : (
+                        <Input value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} className="text-sm" />
+                      )}
+                    </div>
+                  ))}
+                </TabsContent>
+                
+                <TabsContent value="advanced" className="pb-6">
+                  <BlockAdvancedSettingsPanel
+                    settings={selectedBlockData.advanced || {}}
+                    onChange={(advanced) => updateBlockAdvanced(selectedBlockData.id, advanced)}
+                    blockType={selectedBlockData.type}
+                  />
+                </TabsContent>
+              </Tabs>
             </SheetContent>
           </Sheet>
         </>
