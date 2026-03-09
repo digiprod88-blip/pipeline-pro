@@ -1270,6 +1270,54 @@ export type Database = {
           },
         ]
       }
+      shop_settings: {
+        Row: {
+          banner_url: string | null
+          created_at: string
+          currency: string
+          gst_number: string | null
+          id: string
+          logo_url: string | null
+          payment_gateway: string | null
+          razorpay_key_id: string | null
+          shop_name: string
+          stripe_publishable_key: string | null
+          terms_text: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          banner_url?: string | null
+          created_at?: string
+          currency?: string
+          gst_number?: string | null
+          id?: string
+          logo_url?: string | null
+          payment_gateway?: string | null
+          razorpay_key_id?: string | null
+          shop_name?: string
+          stripe_publishable_key?: string | null
+          terms_text?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          banner_url?: string | null
+          created_at?: string
+          currency?: string
+          gst_number?: string | null
+          id?: string
+          logo_url?: string | null
+          payment_gateway?: string | null
+          razorpay_key_id?: string | null
+          shop_name?: string
+          stripe_publishable_key?: string | null
+          terms_text?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       short_links: {
         Row: {
           clicks_count: number
@@ -1442,8 +1490,42 @@ export type Database = {
           },
         ]
       }
+      tracking_pixels: {
+        Row: {
+          created_at: string
+          header_pixel_id: string | null
+          id: string
+          is_active: boolean
+          pixel_type: string
+          thankyou_pixel_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          header_pixel_id?: string | null
+          id?: string
+          is_active?: boolean
+          pixel_type?: string
+          thankyou_pixel_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          header_pixel_id?: string | null
+          id?: string
+          is_active?: boolean
+          pixel_type?: string
+          thankyou_pixel_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
+          hide_finance: boolean
           hide_phone: boolean
           id: string
           pipeline_access: string
@@ -1451,6 +1533,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          hide_finance?: boolean
           hide_phone?: boolean
           id?: string
           pipeline_access?: string
@@ -1458,6 +1541,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          hide_finance?: boolean
           hide_phone?: boolean
           id?: string
           pipeline_access?: string
