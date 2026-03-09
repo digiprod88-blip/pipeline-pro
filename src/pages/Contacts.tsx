@@ -3,30 +3,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useStaffPermissions } from "@/hooks/useStaffPermissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Upload, Trash2, Download, ChevronDown, FileSpreadsheet, History } from "lucide-react";
 import { downloadCSV } from "@/lib/csvExport";
@@ -35,8 +24,14 @@ import { toast } from "sonner";
 import { AddContactDialog } from "@/components/contacts/AddContactDialog";
 import { format } from "date-fns";
 
+function maskPhone(phone: string): string {
+  if (!phone || phone.length < 6) return "••••••••••";
+  return phone.slice(0, phone.length - 6) + "******";
+}
+
 export default function Contacts() {
   const { user } = useAuth();
+  const { canViewPhone } = useStaffPermissions();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -67,6 +62,22 @@ export default function Contacts() {
       if (error) throw error;
       return data;
     },
+  });
+
+  // Fetch order statuses to determine green/red bar
+  const contactIds = contacts?.map(c => c.id) ?? [];
+  const { data: paidContactIds } = useQuery({
+    queryKey: ["paid-contacts", contactIds.join(",")],
+    queryFn: async () => {
+      if (!contactIds.length) return new Set<string>();
+      const { data } = await supabase
+        .from("orders")
+        .select("contact_id")
+        .in("contact_id", contactIds)
+        .eq("status", "paid");
+      return new Set((data ?? []).map(o => o.contact_id).filter(Boolean) as string[]);
+    },
+    enabled: contactIds.length > 0,
   });
 
   const deleteContact = useMutation({
@@ -103,7 +114,7 @@ export default function Contacts() {
       return;
     }
 
-    const contacts = lines.slice(1).map((line) => {
+    const newContacts = lines.slice(1).map((line) => {
       const cols = line.split(",").map((c) => c.trim());
       return {
         user_id: user.id,
@@ -116,11 +127,11 @@ export default function Contacts() {
       };
     });
 
-    const { error } = await supabase.from("contacts").insert(contacts);
+    const { error } = await supabase.from("contacts").insert(newContacts);
     if (error) {
       toast.error("Failed to import: " + error.message);
     } else {
-      toast.success(`Imported ${contacts.length} contacts`);
+      toast.success(`Imported ${newContacts.length} contacts`);
       queryClient.invalidateQueries({ queryKey: ["contacts"] });
       setCsvDialogOpen(false);
     }
@@ -137,51 +148,38 @@ export default function Contacts() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Export
-                <ChevronDown className="h-4 w-4 ml-1" />
+                <Download className="h-4 w-4 mr-2" />Export<ChevronDown className="h-4 w-4 ml-1" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={async () => {
-                  if (!contacts?.length) return toast.error("No contacts to export");
-                  const count = await exportLeadDetails(contacts);
-                  toast.success(`Exported ${count} leads`);
-                }}
-              >
-                <FileSpreadsheet className="h-4 w-4 mr-2" />
-                Lead Details (CSV)
+              <DropdownMenuItem onClick={async () => {
+                if (!contacts?.length) return toast.error("No contacts to export");
+                const count = await exportLeadDetails(contacts);
+                toast.success(`Exported ${count} leads`);
+              }}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />Lead Details (CSV)
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={async () => {
-                  if (!contacts?.length) return toast.error("No contacts to export");
-                  const count = await exportInteractionHistory(contacts.map(c => c.id));
-                  toast.success(`Exported ${count} interactions`);
-                }}
-              >
-                <History className="h-4 w-4 mr-2" />
-                Interaction History
+              <DropdownMenuItem onClick={async () => {
+                if (!contacts?.length) return toast.error("No contacts to export");
+                const count = await exportInteractionHistory(contacts.map(c => c.id));
+                toast.success(`Exported ${count} interactions`);
+              }}>
+                <History className="h-4 w-4 mr-2" />Interaction History
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={async () => {
-                  if (!contacts?.length) return toast.error("No contacts to export");
-                  await exportFullReport(contacts);
-                  toast.success("Full report exported");
-                }}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Full Report (Both)
+              <DropdownMenuItem onClick={async () => {
+                if (!contacts?.length) return toast.error("No contacts to export");
+                await exportFullReport(contacts);
+                toast.success("Full report exported");
+              }}>
+                <Download className="h-4 w-4 mr-2" />Full Report (Both)
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button variant="outline" onClick={() => setCsvDialogOpen(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Import CSV
+            <Upload className="h-4 w-4 mr-2" />Import CSV
           </Button>
           <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Contact
+            <Plus className="h-4 w-4 mr-2" />Add Contact
           </Button>
         </div>
       </div>
@@ -189,17 +187,10 @@ export default function Contacts() {
       <div className="flex gap-3 items-center">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search contacts..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-8"
-          />
+          <Input placeholder="Search contacts..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8" />
         </div>
         <Select value={qualityFilter} onValueChange={setQualityFilter}>
-          <SelectTrigger className="w-[130px]">
-            <SelectValue placeholder="Quality" />
-          </SelectTrigger>
+          <SelectTrigger className="w-[130px]"><SelectValue placeholder="Quality" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Quality</SelectItem>
             <SelectItem value="hot">Hot</SelectItem>
@@ -208,9 +199,7 @@ export default function Contacts() {
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[130px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
+          <SelectTrigger className="w-[130px]"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Status</SelectItem>
             <SelectItem value="lead">Lead</SelectItem>
@@ -224,6 +213,7 @@ export default function Contacts() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Phone</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Company</TableHead>
               <TableHead>Status</TableHead>
@@ -235,61 +225,52 @@ export default function Contacts() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {contacts?.map((contact) => (
-              <TableRow key={contact.id} className="cursor-pointer hover:bg-accent/50" onClick={() => navigate(`/contacts/${contact.id}`)}>
-                <TableCell className="font-medium">
-                  <div className="flex items-center gap-2">
-                    <div className={`h-2 w-2 rounded-full ${contact.status === "customer" ? "bg-success" : "bg-destructive"}`} />
-                    {contact.first_name} {contact.last_name}
-                  </div>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{contact.email ?? "—"}</TableCell>
-                <TableCell className="text-muted-foreground">{contact.company ?? "—"}</TableCell>
-                <TableCell>
-                  <Badge variant={contact.status === "customer" ? "success" : "secondary"} className="capitalize text-xs">
-                    {contact.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {contact.quality && (
-                    <Badge
-                      variant={contact.quality === "hot" ? "hot" : contact.quality === "warm" ? "warm" : "cold"}
-                      className="capitalize text-xs"
-                    >
-                      {contact.quality}
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {contact.pipeline_stages && (
-                    <span className="text-xs text-muted-foreground">
-                      {(contact.pipeline_stages as any).name}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {contact.value && Number(contact.value) > 0
-                    ? `$${Number(contact.value).toLocaleString()}`
-                    : "—"}
-                </TableCell>
-                <TableCell className="text-xs text-muted-foreground">
-                  {format(new Date(contact.created_at), "MMM d, yyyy")}
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                    onClick={() => deleteContact.mutate(contact.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {contacts?.map((contact) => {
+              const hasPaidOrder = paidContactIds?.has(contact.id) ?? false;
+              return (
+                <TableRow key={contact.id} className="cursor-pointer hover:bg-accent/50" onClick={() => navigate(`/contacts/${contact.id}`)}>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                      <div className={`h-8 w-1 rounded-full ${hasPaidOrder ? "bg-success" : "bg-destructive"}`} />
+                      {contact.first_name} {contact.last_name}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {contact.phone ? (canViewPhone ? contact.phone : maskPhone(contact.phone)) : "—"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">{contact.email ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{contact.company ?? "—"}</TableCell>
+                  <TableCell>
+                    <Badge variant={contact.status === "customer" ? "success" : "secondary"} className="capitalize text-xs">{contact.status}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {contact.quality && (
+                      <Badge variant={contact.quality === "hot" ? "hot" : contact.quality === "warm" ? "warm" : "cold"} className="capitalize text-xs">{contact.quality}</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {contact.pipeline_stages && (
+                      <span className="text-xs text-muted-foreground">{(contact.pipeline_stages as any).name}</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {contact.value && Number(contact.value) > 0 ? `$${Number(contact.value).toLocaleString()}` : "—"}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {format(new Date(contact.created_at), "MMM d, yyyy")}
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={(e) => { e.stopPropagation(); deleteContact.mutate(contact.id); }}>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
             {(!contacts || contacts.length === 0) && (
               <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                   No contacts found. Add your first contact to get started.
                 </TableCell>
               </TableRow>
@@ -298,21 +279,13 @@ export default function Contacts() {
         </Table>
       </div>
 
-      <AddContactDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        pipelineId="00000000-0000-0000-0000-000000000001"
-      />
+      <AddContactDialog open={dialogOpen} onOpenChange={setDialogOpen} pipelineId="00000000-0000-0000-0000-000000000001" />
 
       <Dialog open={csvDialogOpen} onOpenChange={setCsvDialogOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Import CSV</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Import CSV</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Upload a CSV file with columns: name/first_name, last_name, email, phone, company
-            </p>
+            <p className="text-sm text-muted-foreground">Upload a CSV file with columns: name/first_name, last_name, email, phone, company</p>
             <Input type="file" accept=".csv" onChange={handleCsvImport} />
           </div>
         </DialogContent>

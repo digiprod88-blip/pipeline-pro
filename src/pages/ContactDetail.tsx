@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useStaffPermissions } from "@/hooks/useStaffPermissions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,10 +16,16 @@ import { ContactTimeline } from "@/components/contacts/ContactTimeline";
 import LeadScoreBadge from "@/components/dashboard/LeadScoreBadge";
 import ClientFiles from "@/components/files/ClientFiles";
 
+function maskPhone(phone: string): string {
+  if (!phone || phone.length < 6) return "••••••••••";
+  return phone.slice(0, phone.length - 6) + "******";
+}
+
 export default function ContactDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { canViewPhone } = useStaffPermissions();
   const queryClient = useQueryClient();
 
   const { data: contact } = useQuery({
@@ -53,23 +60,9 @@ export default function ContactDetail() {
         supabase.from("messages").select("*", { count: "exact", head: true }).eq("contact_id", id!),
         supabase.from("messages").select("*", { count: "exact", head: true }).eq("contact_id", id!).eq("direction", "inbound"),
       ]);
-      return {
-        activities: activityCount ?? 0,
-        messages: messageCount ?? 0,
-        inbound: inboundCount ?? 0,
-      };
+      return { activities: activityCount ?? 0, messages: messageCount ?? 0, inbound: inboundCount ?? 0 };
     },
     enabled: !!id,
-  });
-
-  const { data: userRole } = useQuery({
-    queryKey: ["my-role-detail", user?.id],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data } = await supabase.from("user_roles").select("hide_phone").eq("user_id", user.id).single();
-      return data;
-    },
-    enabled: !!user,
   });
 
   const updateQuality = useMutation({
@@ -92,15 +85,12 @@ export default function ContactDetail() {
     );
   }
 
-  const hidePhone = userRole?.hide_phone ?? false;
-
   return (
     <div className="p-6 space-y-6 max-w-6xl">
       <Button variant="ghost" onClick={() => navigate(-1)} className="mb-2">
         <ArrowLeft className="h-4 w-4 mr-2" />Back
       </Button>
 
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
           <div className={`flex h-14 w-14 items-center justify-center rounded-full text-lg font-semibold ${contact.status === "customer" ? "bg-success/10 text-success" : "bg-secondary text-foreground"}`}>
@@ -129,13 +119,17 @@ export default function ContactDetail() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Info Column */}
         <div className="space-y-4">
           <Card>
             <CardHeader><CardTitle className="text-sm">Contact Info</CardTitle></CardHeader>
             <CardContent className="space-y-3 text-sm">
               {contact.email && <div className="flex items-center gap-2"><Mail className="h-4 w-4 text-muted-foreground" /><span>{contact.email}</span></div>}
-              {contact.phone && <div className="flex items-center gap-2"><Phone className="h-4 w-4 text-muted-foreground" /><span>{hidePhone ? "••••••••••" : contact.phone}</span></div>}
+              {contact.phone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span>{canViewPhone ? contact.phone : maskPhone(contact.phone)}</span>
+                </div>
+              )}
               {contact.company && <div className="flex items-center gap-2"><Building className="h-4 w-4 text-muted-foreground" /><span>{contact.company}</span></div>}
               {contact.value && Number(contact.value) > 0 && <div className="flex items-center gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /><span>${Number(contact.value).toLocaleString()}</span></div>}
               <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground" /><span>Added {format(new Date(contact.created_at), "MMM d, yyyy")}</span></div>
@@ -152,10 +146,7 @@ export default function ContactDetail() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Score Breakdown
-              </CardTitle>
+              <CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4" />Score Breakdown</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center justify-between text-sm">
@@ -169,11 +160,11 @@ export default function ContactDetail() {
                   <span className="font-medium">+{(scoreBreakdown?.activities ?? 0) * 10}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-muted-foreground"><MessageSquare className="h-3 w-3" />Inbound messages ({scoreBreakdown?.inbound ?? 0})</span>
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><MessageSquare className="h-3 w-3" />Inbound ({scoreBreakdown?.inbound ?? 0})</span>
                   <span className="font-medium">+{(scoreBreakdown?.inbound ?? 0) * 20}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-muted-foreground"><MessageSquare className="h-3 w-3" />Outbound messages ({(scoreBreakdown?.messages ?? 0) - (scoreBreakdown?.inbound ?? 0)})</span>
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><MessageSquare className="h-3 w-3" />Outbound ({(scoreBreakdown?.messages ?? 0) - (scoreBreakdown?.inbound ?? 0)})</span>
                   <span className="font-medium">+{((scoreBreakdown?.messages ?? 0) - (scoreBreakdown?.inbound ?? 0)) * 5}</span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -208,7 +199,6 @@ export default function ContactDetail() {
           <ClientFiles contactId={id!} />
         </div>
 
-        {/* Timeline & Inbox Column */}
         <div className="lg:col-span-2 space-y-4">
           <UnifiedInbox contactId={id!} />
           <ContactTimeline contactId={id!} />

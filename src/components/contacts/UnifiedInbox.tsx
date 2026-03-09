@@ -43,28 +43,29 @@ export function UnifiedInbox({ contactId }: UnifiedInboxProps) {
     enabled: !!contactId,
   });
 
-  // Realtime subscription for messages
+  // Fetch profiles for sender attribution
+  const { data: profilesMap } = useQuery({
+    queryKey: ["profiles-map"],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("user_id, full_name");
+      const map: Record<string, string> = {};
+      (data ?? []).forEach(p => { map[p.user_id] = p.full_name ?? "Unknown"; });
+      return map;
+    },
+  });
+
+  // Realtime subscription
   useEffect(() => {
     const msgChannel = supabase
       .channel(`messages-${contactId}`)
-      .on("postgres_changes", {
-        event: "*",
-        schema: "public",
-        table: "messages",
-        filter: `contact_id=eq.${contactId}`,
-      }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: `contact_id=eq.${contactId}` }, () => {
         queryClient.invalidateQueries({ queryKey: ["messages", contactId] });
       })
       .subscribe();
 
-    // Also listen for whatsapp session changes
     const waChannel = supabase
       .channel(`wa-sessions-${contactId}`)
-      .on("postgres_changes", {
-        event: "*",
-        schema: "public",
-        table: "whatsapp_sessions",
-      }, () => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_sessions" }, () => {
         queryClient.invalidateQueries({ queryKey: ["messages", contactId] });
       })
       .subscribe();
@@ -75,7 +76,6 @@ export function UnifiedInbox({ contactId }: UnifiedInboxProps) {
     };
   }, [contactId, queryClient]);
 
-  // Auto-scroll on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages?.length]);
@@ -139,7 +139,6 @@ export function UnifiedInbox({ contactId }: UnifiedInboxProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Messages Timeline */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="w-full">
             <TabsTrigger value="all" className="flex-1">All</TabsTrigger>
@@ -150,25 +149,33 @@ export function UnifiedInbox({ contactId }: UnifiedInboxProps) {
           <TabsContent value={activeTab} className="mt-3">
             <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1">
               <AnimatePresence initial={false}>
-                {messages?.map((msg) => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex gap-2 ${msg.direction === "outbound" ? "flex-row-reverse" : ""}`}
-                  >
-                    <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${channelColor(msg.channel)}`}>
-                      {channelIcon(msg.channel)}
-                    </div>
-                    <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${msg.direction === "outbound" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>
-                      <p className="text-[13px]">{msg.content}</p>
-                      <div className={`flex items-center gap-2 mt-1 ${msg.direction === "outbound" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                        <span className="text-[10px] capitalize">{msg.channel}</span>
-                        <span className="text-[10px]">{format(new Date(msg.created_at), "h:mm a")}</span>
+                {messages?.map((msg) => {
+                  const senderName = msg.direction === "outbound" && profilesMap ? profilesMap[msg.user_id] : null;
+                  return (
+                    <motion.div
+                      key={msg.id}
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`flex gap-2 ${msg.direction === "outbound" ? "flex-row-reverse" : ""}`}
+                    >
+                      <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${channelColor(msg.channel)}`}>
+                        {channelIcon(msg.channel)}
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
+                      <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${msg.direction === "outbound" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>
+                        {senderName && (
+                          <p className={`text-[10px] font-medium mb-0.5 ${msg.direction === "outbound" ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                            {senderName}
+                          </p>
+                        )}
+                        <p className="text-[13px]">{msg.content}</p>
+                        <div className={`flex items-center gap-2 mt-1 ${msg.direction === "outbound" ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                          <span className="text-[10px] capitalize">{msg.channel}</span>
+                          <span className="text-[10px]">{format(new Date(msg.created_at), "h:mm a")}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
               {(!messages || messages.length === 0) && (
                 <p className="text-sm text-muted-foreground text-center py-6">No messages yet</p>
@@ -178,13 +185,10 @@ export function UnifiedInbox({ contactId }: UnifiedInboxProps) {
           </TabsContent>
         </Tabs>
 
-        {/* Send Message */}
         <div className="space-y-2 pt-2 border-t border-border">
           <div className="flex gap-2">
             <Select value={channel} onValueChange={setChannel}>
-              <SelectTrigger className="w-[120px] h-9 text-xs">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="w-[120px] h-9 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="whatsapp">WhatsApp</SelectItem>
                 <SelectItem value="email">Email</SelectItem>
@@ -198,9 +202,7 @@ export function UnifiedInbox({ contactId }: UnifiedInboxProps) {
                 const tpl = templates.find((t) => t.id === val);
                 if (tpl) setMessageText(tpl.content);
               }}>
-                <SelectTrigger className="w-[140px] h-9 text-xs">
-                  <SelectValue placeholder="Template..." />
-                </SelectTrigger>
+                <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue placeholder="Template..." /></SelectTrigger>
                 <SelectContent>
                   {templates.map((t) => (
                     <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
