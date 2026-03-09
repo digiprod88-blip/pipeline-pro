@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { downloadInvoice } from "@/lib/invoice";
 import { ShopSettings } from "@/components/shop/ShopSettings";
+import { CheckoutButton } from "@/components/shop/CheckoutButton";
 
 export default function Shop() {
   const { user } = useAuth();
