@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Zap, Clock, MessageSquare, Users, Bell, Trash2, Play, AlertCircle, FileText, GitBranch } from "lucide-react";
+import { Plus, Zap, Clock, MessageSquare, Users, Bell, Trash2, Play, AlertCircle, FileText, GitBranch, CheckCircle2, XCircle, TestTube2, Radio } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -37,6 +37,9 @@ const ACTION_TYPES = [
   { value: "update_stage", label: "Update Pipeline Stage", icon: Zap },
   { value: "move_to_vip", label: "⭐ Move to VIP Stage", icon: Zap },
   { value: "boost_score", label: "📈 Boost Lead Score", icon: Zap },
+  { value: "add_tag", label: "🏷️ Add Tag", icon: Zap },
+  { value: "remove_tag", label: "🏷️ Remove Tag", icon: Zap },
+  { value: "create_task", label: "📋 Create Task", icon: Zap },
 ];
 
 const CONDITION_FIELDS = [
@@ -66,6 +69,8 @@ export default function Workflows() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [showLogs, setShowLogs] = useState<string | null>(null);
+  const [testingWorkflow, setTestingWorkflow] = useState<string | null>(null);
+  const [testContactId, setTestContactId] = useState("");
 
   const [form, setForm] = useState({ name: "", description: "", trigger_type: "new_lead" });
   const [actions, setActions] = useState<WorkflowAction[]>([]);
@@ -74,6 +79,15 @@ export default function Workflows() {
     queryKey: ["message-templates"],
     queryFn: async () => {
       const { data, error } = await supabase.from("message_templates").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: contacts } = useQuery({
+    queryKey: ["contacts-for-test"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("contacts").select("id, first_name, last_name").order("created_at", { ascending: false }).limit(20);
       if (error) throw error;
       return data;
     },
@@ -97,6 +111,16 @@ export default function Workflows() {
       return data;
     },
     enabled: !!showLogs,
+  });
+
+  // Check WABA connection
+  const { data: wabaConnected } = useQuery({
+    queryKey: ["waba-connection", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("integration_connections").select("is_connected").eq("user_id", user!.id).eq("integration_id", "whatsapp_waba").maybeSingle();
+      return data?.is_connected || false;
+    },
+    enabled: !!user,
   });
 
   const createWorkflow = useMutation({
@@ -125,15 +149,35 @@ export default function Workflows() {
     },
   });
 
+  const testWorkflow = useMutation({
+    mutationFn: async ({ workflowId, contactId }: { workflowId: string; contactId: string }) => {
+      const { data, error } = await supabase.functions.invoke("workflow-executor", {
+        body: { workflow_id: workflowId, contact_id: contactId, trigger_type: "manual_test" },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["workflow-logs"] });
+      setTestingWorkflow(null);
+      setTestContactId("");
+      if (data?.results) {
+        const successCount = data.results.filter((r: any) => r.status === "success").length;
+        const failCount = data.results.filter((r: any) => r.status !== "success" && r.status !== "evaluated" && r.status !== "scheduled").length;
+        toast.success(`Test complete: ${successCount} passed, ${failCount} failed`);
+      } else {
+        toast.success("Workflow test completed");
+      }
+    },
+    onError: (e) => toast.error(`Test failed: ${e.message}`),
+  });
+
   const toggleActive = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
       const { error } = await supabase.from("workflows").update({ is_active }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["workflows"] });
-      toast.success("Workflow updated");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["workflows"] }); toast.success("Workflow updated"); },
   });
 
   const deleteWorkflow = useMutation({
@@ -141,10 +185,7 @@ export default function Workflows() {
       const { error } = await supabase.from("workflows").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["workflows"] });
-      toast.success("Workflow deleted");
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["workflows"] }); toast.success("Workflow deleted"); },
   });
 
   const updateAction = (index: number, updates: Partial<WorkflowAction>) => {
@@ -155,8 +196,9 @@ export default function Workflows() {
     setActions(prev => prev.map((a, i) => i === index ? { ...a, action_config: { ...a.action_config, [key]: value } } : a));
   };
 
-  // Check if workflow has high-frequency risk (wait actions with 100+ potential recipients)
-  const hasHighFrequencyRisk = actions.some(a => a.action_type === "send_whatsapp") && actions.every(a => a.action_type !== "wait" || a.delay_minutes < 1);
+  const hasWhatsAppAction = actions.some(a => a.action_type === "send_whatsapp");
+  const hasWaitStep = actions.some(a => a.action_type === "wait" && a.delay_minutes >= 1);
+  const hasHighFrequencyRisk = hasWhatsAppAction && !hasWaitStep;
 
   const renderActionEditor = (action: WorkflowAction, i: number) => {
     switch (action.action_type) {
@@ -187,27 +229,13 @@ export default function Workflows() {
             <div className="grid grid-cols-3 gap-2">
               <Select value={action.action_config?.field || ""} onValueChange={v => updateActionConfig(i, "field", v)}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Field" /></SelectTrigger>
-                <SelectContent>
-                  {CONDITION_FIELDS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
-                </SelectContent>
+                <SelectContent>{CONDITION_FIELDS.map(f => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}</SelectContent>
               </Select>
               <Select value={action.action_config?.operator || ""} onValueChange={v => updateActionConfig(i, "operator", v)}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Operator" /></SelectTrigger>
-                <SelectContent>
-                  {CONDITION_OPERATORS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                </SelectContent>
+                <SelectContent>{CONDITION_OPERATORS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}</SelectContent>
               </Select>
               <Input className="h-8 text-xs" placeholder="Value" value={action.action_config?.value || ""} onChange={e => updateActionConfig(i, "value", e.target.value)} />
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2 rounded bg-success/5 border border-success/20">
-                <span className="text-success font-medium">✓ TRUE →</span>
-                <p className="text-muted-foreground mt-1">Continue to next action</p>
-              </div>
-              <div className="p-2 rounded bg-destructive/5 border border-destructive/20">
-                <span className="text-destructive font-medium">✗ FALSE →</span>
-                <p className="text-muted-foreground mt-1">Skip to end</p>
-              </div>
             </div>
           </div>
         );
@@ -216,14 +244,28 @@ export default function Workflows() {
       case "send_email":
         return (
           <div className="space-y-2">
+            {action.action_type === "send_whatsapp" && (
+              <div className="flex items-center gap-2">
+                <Label className="text-xs">Channel:</Label>
+                <Select value={action.action_config?.wa_type || "web"} onValueChange={v => updateActionConfig(i, "wa_type", v)}>
+                  <SelectTrigger className="h-7 w-[140px] text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="web">WhatsApp Web</SelectItem>
+                    <SelectItem value="waba">WABA (Bulk safe)</SelectItem>
+                  </SelectContent>
+                </Select>
+                {action.action_config?.wa_type === "waba" && !wabaConnected && (
+                  <Badge variant="destructive" className="text-[10px]">WABA not connected</Badge>
+                )}
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-muted-foreground" />
               <Select
                 value={action.action_config?.template_id || "custom"}
                 onValueChange={v => {
-                  if (v === "custom") {
-                    updateActionConfig(i, "template_id", undefined);
-                  } else {
+                  if (v === "custom") { updateActionConfig(i, "template_id", undefined); }
+                  else {
                     const tmpl = templates?.find(t => t.id === v);
                     setActions(prev => prev.map((a, idx) => idx === i ? { ...a, action_config: { ...a.action_config, template_id: v, message: tmpl?.content || "" } } : a));
                   }
@@ -236,13 +278,15 @@ export default function Workflows() {
                 </SelectContent>
               </Select>
             </div>
-            <Textarea
-              placeholder="Message content..."
-              value={action.action_config?.message || ""}
-              onChange={e => updateActionConfig(i, "message", e.target.value)}
-              rows={2}
-              className="text-sm"
-            />
+            <Textarea placeholder="Message content..." value={action.action_config?.message || ""} onChange={e => updateActionConfig(i, "message", e.target.value)} rows={2} className="text-sm" />
+          </div>
+        );
+
+      case "add_tag":
+      case "remove_tag":
+        return (
+          <div className="flex items-center gap-2">
+            <Input placeholder="Tag name" value={action.action_config?.tag || ""} onChange={e => updateActionConfig(i, "tag", e.target.value)} className="h-8 text-sm" />
           </div>
         );
 
@@ -255,6 +299,17 @@ export default function Workflows() {
           </div>
         );
     }
+  };
+
+  // Parse log message into steps for granular display
+  const parseLogSteps = (message: string) => {
+    if (!message) return [];
+    return message.split(" → ").map(step => {
+      const [action, ...rest] = step.split(": ");
+      const detail = rest.join(": ");
+      const isSuccess = !detail?.toLowerCase().includes("failed") && !detail?.toLowerCase().includes("error");
+      return { action: action?.trim(), detail: detail?.trim(), isSuccess };
+    });
   };
 
   return (
@@ -277,13 +332,10 @@ export default function Workflows() {
                 <Label>Trigger</Label>
                 <Select value={form.trigger_type} onValueChange={v => setForm({ ...form, trigger_type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {TRIGGER_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{TRIGGER_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
 
-              {/* Action Steps Timeline */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Action Steps</Label>
@@ -292,23 +344,16 @@ export default function Workflows() {
                   </Button>
                 </div>
 
-                {/* Timeline visualization */}
                 <div className="relative">
                   {actions.map((action, i) => (
                     <div key={i} className="relative pl-6 pb-3 last:pb-0">
-                      {/* Timeline line */}
-                      {i < actions.length - 1 && (
-                        <div className="absolute left-[11px] top-6 bottom-0 w-[2px] bg-border" />
-                      )}
-                      {/* Timeline dot */}
+                      {i < actions.length - 1 && <div className="absolute left-[11px] top-6 bottom-0 w-[2px] bg-border" />}
                       <div className={`absolute left-0 top-1 h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold
-                        ${action.action_type === "wait" ? "bg-warning/20 text-warning border border-warning/30" : 
-                          action.action_type === "condition" ? "bg-info/20 text-info border border-info/30" : 
-                          "bg-primary/10 text-primary border border-primary/20"}`}
-                      >
+                        ${action.action_type === "wait" ? "bg-warning/20 text-warning border border-warning/30" :
+                          action.action_type === "condition" ? "bg-info/20 text-info border border-info/30" :
+                          "bg-primary/10 text-primary border border-primary/20"}`}>
                         {i + 1}
                       </div>
-
                       <Card className="p-3">
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
@@ -319,9 +364,7 @@ export default function Workflows() {
                           </div>
                           <Select value={action.action_type} onValueChange={v => updateAction(i, { action_type: v })}>
                             <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {ACTION_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
-                            </SelectContent>
+                            <SelectContent>{ACTION_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                           </Select>
                           {renderActionEditor(action, i)}
                         </div>
@@ -335,15 +378,13 @@ export default function Workflows() {
                 )}
               </div>
 
-              {/* WABA Warning for high-frequency messaging */}
               {hasHighFrequencyRisk && (
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
                   <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
                   <div className="text-xs">
                     <p className="font-semibold text-destructive">⚠️ Bulk Messaging Warning</p>
                     <p className="text-muted-foreground mt-1">
-                      Sending WhatsApp messages to many leads simultaneously without a proper delay can get your personal number banned by WhatsApp. 
-                      Add a <strong>Wait</strong> step between messages or use a <strong>WhatsApp Business API (WABA)</strong> account for bulk messaging.
+                      Add a <strong>Wait</strong> step between WhatsApp messages or use <strong>WABA</strong> channel to prevent number bans.
                     </p>
                   </div>
                 </div>
@@ -357,22 +398,72 @@ export default function Workflows() {
         </Dialog>
       </div>
 
-      {/* Logs Dialog */}
+      {/* Test Workflow Dialog */}
+      <Dialog open={!!testingWorkflow} onOpenChange={() => { setTestingWorkflow(null); setTestContactId(""); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><TestTube2 className="h-5 w-5" />Test Workflow</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Select a contact to test with</Label>
+              <Select value={testContactId} onValueChange={setTestContactId}>
+                <SelectTrigger><SelectValue placeholder="Choose contact..." /></SelectTrigger>
+                <SelectContent>
+                  {contacts?.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.first_name} {c.last_name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="rounded-lg bg-warning/10 border border-warning/20 p-3">
+              <p className="text-xs text-warning font-medium">⚠️ This will execute real actions</p>
+              <p className="text-xs text-muted-foreground mt-1">Messages will be sent and data will be modified for the selected contact.</p>
+            </div>
+            <Button
+              className="w-full"
+              disabled={!testContactId || testWorkflow.isPending}
+              onClick={() => testWorkflow.mutate({ workflowId: testingWorkflow!, contactId: testContactId })}
+            >
+              {testWorkflow.isPending ? "Running..." : "Run Test"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Logs Dialog with granular steps */}
       <Dialog open={!!showLogs} onOpenChange={() => setShowLogs(null)}>
         <DialogContent className="max-w-lg max-h-[70vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Workflow Logs</DialogTitle></DialogHeader>
-          <div className="space-y-2">
-            {workflowLogs?.map((log: any) => (
-              <div key={log.id} className="flex items-start gap-2 text-sm border-b border-border pb-2">
-                {log.status === "success" ? <Zap className="h-4 w-4 text-success mt-0.5" /> : <AlertCircle className="h-4 w-4 text-destructive mt-0.5" />}
-                <div>
-                  <p>{log.message}</p>
-                  {log.contacts && <p className="text-muted-foreground text-xs">{log.contacts.first_name} {log.contacts.last_name}</p>}
-                  <p className="text-muted-foreground text-xs">{format(new Date(log.created_at), "MMM d, HH:mm")}</p>
-                </div>
-              </div>
-            ))}
-            {(!workflowLogs || workflowLogs.length === 0) && <p className="text-sm text-muted-foreground">No logs yet</p>}
+          <DialogHeader><DialogTitle>Workflow Execution Logs</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            {workflowLogs?.map((log: any) => {
+              const steps = parseLogSteps(log.message);
+              return (
+                <Card key={log.id} className="p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {log.status === "success" ? <CheckCircle2 className="h-4 w-4 text-success" /> : <XCircle className="h-4 w-4 text-destructive" />}
+                      <span className="text-xs font-medium">{log.status === "success" ? "Completed" : "Failed"}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">{format(new Date(log.created_at), "MMM d, HH:mm:ss")}</span>
+                  </div>
+                  {log.contacts && <p className="text-xs text-muted-foreground mb-2">Contact: {log.contacts.first_name} {log.contacts.last_name}</p>}
+                  {/* Granular step display */}
+                  <div className="space-y-1">
+                    {steps.map((step, idx) => (
+                      <div key={idx} className="flex items-start gap-2 text-xs">
+                        {step.isSuccess ? <CheckCircle2 className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" /> : <XCircle className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />}
+                        <div>
+                          <span className="font-medium capitalize">{step.action?.replace(/_/g, " ")}</span>
+                          {step.detail && <span className="text-muted-foreground ml-1">— {step.detail}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              );
+            })}
+            {(!workflowLogs || workflowLogs.length === 0) && <p className="text-sm text-muted-foreground text-center py-6">No execution logs yet. Run a test or wait for triggers.</p>}
           </div>
         </DialogContent>
       </Dialog>
@@ -396,8 +487,15 @@ export default function Workflows() {
               </div>
               <p className="text-xs text-muted-foreground">Created {format(new Date(wf.created_at), "MMM d, yyyy")}</p>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setShowLogs(wf.id)}><Play className="h-3 w-3 mr-1" />Logs</Button>
-                <Button variant="ghost" size="sm" onClick={() => deleteWorkflow.mutate(wf.id)}><Trash2 className="h-3 w-3" /></Button>
+                <Button variant="outline" size="sm" onClick={() => setTestingWorkflow(wf.id)}>
+                  <TestTube2 className="h-3 w-3 mr-1" />Test
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setShowLogs(wf.id)}>
+                  <Play className="h-3 w-3 mr-1" />Logs
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => deleteWorkflow.mutate(wf.id)}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
               </div>
             </CardContent>
           </Card>

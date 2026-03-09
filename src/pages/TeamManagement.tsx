@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Shield, UserPlus, Bot, Zap } from "lucide-react";
+import { Plus, Shield, UserPlus, Bot, Zap, Download, Eye, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 export default function TeamManagement() {
@@ -38,7 +38,6 @@ export default function TeamManagement() {
 
   const isAdmin = currentRole?.role === "admin";
 
-  // Load AI Staff setting from integration_connections
   const { data: aiConnection } = useQuery({
     queryKey: ["ai-staff-connection", user?.id],
     queryFn: async () => {
@@ -148,29 +147,32 @@ export default function TeamManagement() {
         {aiStaffEnabled && (
           <CardContent className="pt-0">
             <p className="text-xs text-muted-foreground">
-              AI Staff will automatically generate and send contextual replies to incoming WhatsApp messages using your content library and contact history. Responses are sent via the <code className="text-[10px] bg-muted px-1 rounded">ai-content-gen</code> backend function.
+              AI Staff will automatically generate and send contextual replies to incoming WhatsApp messages using your content library and contact history.
             </p>
           </CardContent>
         )}
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Team Members</CardTitle></CardHeader>
-        <CardContent>
+        <CardHeader><CardTitle className="text-base">Team Members & Permissions</CardTitle></CardHeader>
+        <CardContent className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Pipeline Access</TableHead>
-                <TableHead>Hide Phone</TableHead>
-                <TableHead>Hide Finance</TableHead>
+                <TableHead>Pipeline</TableHead>
+                <TableHead className="text-center"><span className="flex items-center gap-1 justify-center"><Eye className="h-3 w-3" />Hide Phone</span></TableHead>
+                <TableHead className="text-center"><span className="flex items-center gap-1 justify-center"><Lock className="h-3 w-3" />Hide Finance</span></TableHead>
+                <TableHead className="text-center"><span className="flex items-center gap-1 justify-center"><Download className="h-3 w-3" />No Export</span></TableHead>
+                <TableHead className="text-center"><span className="flex items-center gap-1 justify-center"><Eye className="h-3 w-3" />Read-Only Funnel</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {members?.map((member) => {
                 const profile = member.profiles as any;
                 const isCurrentUser = member.user_id === user?.id;
+                const memberAny = member as any;
                 return (
                   <TableRow key={member.id}>
                     <TableCell>
@@ -181,7 +183,7 @@ export default function TeamManagement() {
                     </TableCell>
                     <TableCell>
                       <Select value={member.role} onValueChange={(val) => updateRole.mutate({ id: member.id, updates: { role: val } })} disabled={isCurrentUser}>
-                        <SelectTrigger className="w-[120px]"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="w-[100px]"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="admin">Admin</SelectItem>
                           <SelectItem value="staff">Staff</SelectItem>
@@ -192,7 +194,7 @@ export default function TeamManagement() {
                     </TableCell>
                     <TableCell>
                       <Select value={member.pipeline_access} onValueChange={(val) => updateRole.mutate({ id: member.id, updates: { pipeline_access: val } })} disabled={isCurrentUser}>
-                        <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="full">Full Access</SelectItem>
                           <SelectItem value="view">View Only</SelectItem>
@@ -200,13 +202,15 @@ export default function TeamManagement() {
                         </SelectContent>
                       </Select>
                     </TableCell>
-                    <TableCell><Switch checked={member.hide_phone} onCheckedChange={(checked) => updateRole.mutate({ id: member.id, updates: { hide_phone: checked } })} disabled={isCurrentUser} /></TableCell>
-                    <TableCell><Switch checked={member.hide_finance} onCheckedChange={(checked) => updateRole.mutate({ id: member.id, updates: { hide_finance: checked } })} disabled={isCurrentUser} /></TableCell>
+                    <TableCell className="text-center"><Switch checked={member.hide_phone} onCheckedChange={(checked) => updateRole.mutate({ id: member.id, updates: { hide_phone: checked } })} disabled={isCurrentUser} /></TableCell>
+                    <TableCell className="text-center"><Switch checked={member.hide_finance} onCheckedChange={(checked) => updateRole.mutate({ id: member.id, updates: { hide_finance: checked } })} disabled={isCurrentUser} /></TableCell>
+                    <TableCell className="text-center"><Switch checked={memberAny.disable_export || false} onCheckedChange={(checked) => updateRole.mutate({ id: member.id, updates: { disable_export: checked } })} disabled={isCurrentUser} /></TableCell>
+                    <TableCell className="text-center"><Switch checked={memberAny.read_only_funnel || false} onCheckedChange={(checked) => updateRole.mutate({ id: member.id, updates: { read_only_funnel: checked } })} disabled={isCurrentUser} /></TableCell>
                   </TableRow>
                 );
               })}
               {(!members || members.length === 0) && (
-                <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No team members found.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No team members found.</TableCell></TableRow>
               )}
             </TableBody>
           </Table>
