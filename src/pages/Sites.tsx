@@ -15,6 +15,8 @@ import { Plus, Globe, Eye, Users, Pencil, Trash2, Copy, Sparkles, PanelRightOpen
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { AiAssistantSidebar } from "@/components/sites/AiAssistantSidebar";
+import { NestedPageBuilder } from "@/components/sites/NestedPageBuilder";
+import type { PageSection } from "@/components/sites/types";
 import { PageBuilder, type PageBlock } from "@/components/sites/PageBuilder";
 
 export default function Sites() {
@@ -24,6 +26,7 @@ export default function Sites() {
   const [editingPage, setEditingPage] = useState<any>(null);
   const [showAi, setShowAi] = useState(false);
   const [builderPageId, setBuilderPageId] = useState<string | null>(null);
+  const [useNestedBuilder, setUseNestedBuilder] = useState(true);
   const [form, setForm] = useState({ title: "", slug: "", description: "", meta_title: "", meta_description: "", template: "blank" });
 
   const { data: pages = [], isLoading } = useQuery({
@@ -73,11 +76,11 @@ export default function Sites() {
   });
 
   const saveBlocksMutation = useMutation({
-    mutationFn: async ({ id, blocks }: { id: string; blocks: PageBlock[] }) => {
+    mutationFn: async ({ id, blocks }: { id: string; blocks: PageBlock[] | PageSection[] }) => {
       const { error } = await supabase.from("landing_pages").update({ content: blocks as any }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["landing-pages"] }); toast.success("Page blocks saved"); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["landing-pages"] }); toast.success("Page saved"); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -125,12 +128,33 @@ export default function Sites() {
   // Page Builder Mode
   const builderPage = builderPageId ? pages.find((p: any) => p.id === builderPageId) : null;
   if (builderPage) {
-    const existingBlocks = Array.isArray(builderPage.content) ? (builderPage.content as unknown as PageBlock[]) : [];
+    const existingContent = Array.isArray(builderPage.content) ? builderPage.content : [];
+    
+    // Check if content is nested (PageSection[]) or flat (PageBlock[])
+    const firstItem = existingContent[0];
+    const isNested = existingContent.length > 0 && typeof firstItem === 'object' && firstItem !== null && 'rows' in firstItem;
+    
+    if (useNestedBuilder || isNested) {
+      const sections = isNested ? (existingContent as unknown as PageSection[]) : [];
+      return (
+        <NestedPageBuilder
+          pageId={builderPage.id}
+          pageTitle={builderPage.title}
+          initialSections={sections}
+          onSave={(sections) => saveBlocksMutation.mutate({ id: builderPage.id, blocks: sections })}
+          onBack={() => setBuilderPageId(null)}
+          saving={saveBlocksMutation.isPending}
+        />
+      );
+    }
+    
+    // Fallback to flat builder
+    const blocks = existingContent as unknown as PageBlock[];
     return (
       <PageBuilder
         pageId={builderPage.id}
         pageTitle={builderPage.title}
-        initialBlocks={existingBlocks}
+        initialBlocks={blocks}
         onSave={(blocks) => saveBlocksMutation.mutate({ id: builderPage.id, blocks })}
         onBack={() => setBuilderPageId(null)}
         saving={saveBlocksMutation.isPending}

@@ -8,10 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link2, Trash2, Users, Store, Map, Settings2 } from "lucide-react";
+import { Link2, Trash2, Users, Store, Map, Settings2, Variable, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AppStoreIntegrations } from "@/components/settings/AppStoreIntegrations";
 import { LeadFormMapping } from "@/components/settings/LeadFormMapping";
+import { DynamicVariables } from "@/components/settings/DynamicVariables";
+import { WhatsAppQRConnection } from "@/components/settings/WhatsAppQRConnection";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -104,7 +106,7 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="general" className="gap-1.5">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">General</span>
@@ -116,6 +118,14 @@ export default function Settings() {
           <TabsTrigger value="leadmapping" className="gap-1.5">
             <Map className="h-4 w-4" />
             <span className="hidden sm:inline">Lead Mapping</span>
+          </TabsTrigger>
+          <TabsTrigger value="variables" className="gap-1.5">
+            <Variable className="h-4 w-4" />
+            <span className="hidden sm:inline">Variables</span>
+          </TabsTrigger>
+          <TabsTrigger value="whatsapp" className="gap-1.5">
+            <MessageCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">WhatsApp</span>
           </TabsTrigger>
         </TabsList>
 
@@ -206,6 +216,14 @@ export default function Settings() {
 
         <TabsContent value="leadmapping" className="mt-6">
           <LeadFormMapping />
+        </TabsContent>
+
+        <TabsContent value="variables" className="mt-6">
+          <DynamicVariables />
+        </TabsContent>
+
+        <TabsContent value="whatsapp" className="mt-6">
+          <WhatsAppQRConnection />
         </TabsContent>
       </Tabs>
     </div>
