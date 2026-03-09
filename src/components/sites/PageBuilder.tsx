@@ -16,24 +16,26 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  ArrowLeft, Save, Plus, Type, Image, Star, MessageSquare, Layout, Zap,
+  ArrowLeft, Save, Plus, Type, Image, Star, MessageSquare, Layout, Zap, FormInput, Settings2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { SortableBlock } from "./SortableBlock";
+import { BlockAdvancedSettingsPanel, type BlockAdvancedSettings } from "./BlockAdvancedSettings";
 
-export type BlockType = "hero" | "features" | "cta" | "testimonials" | "text" | "image";
+export type BlockType = "hero" | "features" | "cta" | "testimonials" | "text" | "image" | "popup_form";
 
 export interface PageBlock {
   id: string;
   type: BlockType;
   content: Record<string, string>;
+  advanced?: BlockAdvancedSettings;
 }
 
 const BLOCK_TEMPLATES: { type: BlockType; label: string; icon: React.ElementType; defaults: Record<string, string> }[] = [
@@ -43,6 +45,7 @@ const BLOCK_TEMPLATES: { type: BlockType; label: string; icon: React.ElementType
   { type: "testimonials", label: "Testimonials", icon: MessageSquare, defaults: { title: "What our customers say", name1: "John Doe", quote1: "This product changed everything!", name2: "Jane Smith", quote2: "Absolutely love it!" } },
   { type: "text", label: "Text Block", icon: Type, defaults: { heading: "Section Title", body: "Write your content here..." } },
   { type: "image", label: "Image + Text", icon: Image, defaults: { heading: "Visual Section", body: "Describe your image content", imageUrl: "" } },
+  { type: "popup_form", label: "Popup Form", icon: FormInput, defaults: { formTitle: "Get Started", nameLabel: "Your Name", emailLabel: "Your Email", buttonText: "Submit" } },
 ];
 
 interface PageBuilderProps {
@@ -93,6 +96,12 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
   const updateBlockContent = (blockId: string, key: string, value: string) => {
     setBlocks((prev) =>
       prev.map((b) => (b.id === blockId ? { ...b, content: { ...b.content, [key]: value } } : b))
+    );
+  };
+
+  const updateBlockAdvanced = (blockId: string, advanced: BlockAdvancedSettings) => {
+    setBlocks((prev) =>
+      prev.map((b) => (b.id === blockId ? { ...b, advanced } : b))
     );
   };
 
@@ -186,21 +195,42 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
         <>
           {/* Desktop: inline panel */}
           <div className="hidden md:block border-l border-border bg-card shrink-0 w-[320px] overflow-y-auto">
-            <div className="p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold capitalize">{selectedBlockData.type} Settings</h3>
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold capitalize">{selectedBlockData.type.replace("_", " ")} Settings</h3>
                 <Button variant="ghost" size="sm" onClick={() => setSelectedBlock(null)}>✕</Button>
               </div>
-              {Object.entries(selectedBlockData.content).map(([key, value]) => (
-                <div key={key} className="space-y-1">
-                  <label className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1").replace(/(\d+)/g, " $1")}</label>
-                  {value.length > 60 || key === "body" ? (
-                    <Textarea value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} rows={3} className="text-sm" />
-                  ) : (
-                    <Input value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} className="text-sm" />
-                  )}
-                </div>
-              ))}
+              
+              <Tabs defaultValue="content" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
+                  <TabsTrigger value="advanced" className="text-xs">
+                    <Settings2 className="h-3 w-3 mr-1" />
+                    Advanced
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="content" className="space-y-4 mt-0">
+                  {Object.entries(selectedBlockData.content).map(([key, value]) => (
+                    <div key={key} className="space-y-1">
+                      <label className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1").replace(/(\d+)/g, " $1")}</label>
+                      {value.length > 60 || key === "body" ? (
+                        <Textarea value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} rows={3} className="text-sm" />
+                      ) : (
+                        <Input value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} className="text-sm" />
+                      )}
+                    </div>
+                  ))}
+                </TabsContent>
+                
+                <TabsContent value="advanced" className="mt-0">
+                  <BlockAdvancedSettingsPanel
+                    settings={selectedBlockData.advanced || {}}
+                    onChange={(advanced) => updateBlockAdvanced(selectedBlockData.id, advanced)}
+                    blockType={selectedBlockData.type}
+                  />
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
 
@@ -208,20 +238,35 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
           <Sheet open={!!selectedBlockData} onOpenChange={(open) => { if (!open) setSelectedBlock(null); }}>
             <SheetContent side="bottom" className="md:hidden max-h-[70vh] overflow-y-auto rounded-t-2xl">
               <SheetHeader>
-                <SheetTitle className="capitalize">{selectedBlockData.type} Settings</SheetTitle>
+                <SheetTitle className="capitalize">{selectedBlockData.type.replace("_", " ")} Settings</SheetTitle>
               </SheetHeader>
-              <div className="space-y-4 pt-4 pb-6">
-                {Object.entries(selectedBlockData.content).map(([key, value]) => (
-                  <div key={key} className="space-y-1">
-                    <label className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1").replace(/(\d+)/g, " $1")}</label>
-                    {value.length > 60 || key === "body" ? (
-                      <Textarea value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} rows={3} className="text-sm" />
-                    ) : (
-                      <Input value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} className="text-sm" />
-                    )}
-                  </div>
-                ))}
-              </div>
+              <Tabs defaultValue="content" className="w-full pt-4">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
+                  <TabsTrigger value="advanced" className="text-xs">Advanced</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="content" className="space-y-4 pb-6">
+                  {Object.entries(selectedBlockData.content).map(([key, value]) => (
+                    <div key={key} className="space-y-1">
+                      <label className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1").replace(/(\d+)/g, " $1")}</label>
+                      {value.length > 60 || key === "body" ? (
+                        <Textarea value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} rows={3} className="text-sm" />
+                      ) : (
+                        <Input value={value} onChange={(e) => updateBlockContent(selectedBlockData.id, key, e.target.value)} className="text-sm" />
+                      )}
+                    </div>
+                  ))}
+                </TabsContent>
+                
+                <TabsContent value="advanced" className="pb-6">
+                  <BlockAdvancedSettingsPanel
+                    settings={selectedBlockData.advanced || {}}
+                    onChange={(advanced) => updateBlockAdvanced(selectedBlockData.id, advanced)}
+                    blockType={selectedBlockData.type}
+                  />
+                </TabsContent>
+              </Tabs>
             </SheetContent>
           </Sheet>
         </>

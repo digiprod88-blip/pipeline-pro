@@ -1,6 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Trash2, Layout, Zap, Star, MessageSquare, Type, Image } from "lucide-react";
+import { GripVertical, Trash2, Layout, Zap, Star, MessageSquare, Type, Image, FormInput } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { PageBlock, BlockType } from "./PageBuilder";
@@ -12,6 +12,7 @@ const BLOCK_ICONS: Record<BlockType, React.ElementType> = {
   testimonials: MessageSquare,
   text: Type,
   image: Image,
+  popup_form: FormInput,
 };
 
 const BLOCK_LABELS: Record<BlockType, string> = {
@@ -21,6 +22,7 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   testimonials: "Testimonials",
   text: "Text Block",
   image: "Image + Text",
+  popup_form: "Popup Form",
 };
 
 function BlockPreview({ block }: { block: PageBlock }) {
@@ -93,6 +95,18 @@ function BlockPreview({ block }: { block: PageBlock }) {
             <h3 className="text-sm font-semibold text-foreground">{block.content.heading}</h3>
             <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{block.content.body}</p>
           </div>
+        </div>
+      );
+    case "popup_form":
+      return (
+        <div className="py-4 px-4 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg border border-primary/20">
+            <FormInput className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-primary">Popup Form</span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            {block.content.formTitle} - Appears when button is clicked
+          </p>
         </div>
       );
     default:
