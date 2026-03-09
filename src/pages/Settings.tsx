@@ -181,6 +181,10 @@ export default function Settings() {
             <Target className="h-4 w-4" />
             <span className="hidden sm:inline">Pixels</span>
           </TabsTrigger>
+          <TabsTrigger value="webhooks" className="gap-1.5">
+            <Webhook className="h-4 w-4" />
+            <span className="hidden sm:inline">Webhooks</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="general" className="space-y-6 mt-6">
