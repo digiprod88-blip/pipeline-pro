@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link2, Trash2, Users, Store, Map, Settings2, Variable, MessageCircle, Target, Globe, Copy, CheckCircle } from "lucide-react";
+import { Link2, Trash2, Users, Store, Map, Settings2, Variable, MessageCircle, Target, Globe, Copy, CheckCircle, Webhook } from "lucide-react";
 import { toast } from "sonner";
 import { AppStoreIntegrations } from "@/components/settings/AppStoreIntegrations";
 import { LeadFormMapping } from "@/components/settings/LeadFormMapping";
