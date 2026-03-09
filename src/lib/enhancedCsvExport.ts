@@ -43,9 +43,17 @@ function escapeCsvField(field: string): string {
 }
 
 function generateCsv(headers: string[], rows: string[][]): string {
+  const CHUNK_SIZE = 500;
   const headerRow = headers.map(escapeCsvField).join(",");
-  const dataRows = rows.map(row => row.map(cell => escapeCsvField(cell || "")).join(","));
-  return [headerRow, ...dataRows].join("\n");
+  const chunks: string[] = [headerRow];
+
+  for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+    const chunk = rows.slice(i, i + CHUNK_SIZE);
+    const chunkStr = chunk.map(row => row.map(cell => escapeCsvField(cell || "")).join(",")).join("\n");
+    chunks.push(chunkStr);
+  }
+
+  return chunks.join("\n");
 }
 
 function downloadFile(content: string, filename: string) {
