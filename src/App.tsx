@@ -27,6 +27,7 @@ import SocialScheduler from "./pages/SocialScheduler";
 import AuditLogs from "./pages/AuditLogs";
 import ClientPortal from "./pages/portal/ClientPortal";
 import BookingPage from "./pages/BookingPage";
+import PublicLandingPage from "./pages/PublicLandingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -76,6 +77,7 @@ const App = () => (
             }
           />
           <Route path="/book/:userId" element={<BookingPage />} />
+          <Route path="/p/:slug" element={<PublicLandingPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

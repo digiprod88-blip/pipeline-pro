@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { downloadInvoice } from "@/lib/invoice";
 import { ShopSettings } from "@/components/shop/ShopSettings";
+import { CheckoutButton } from "@/components/shop/CheckoutButton";
 
 export default function Shop() {
   const { user } = useAuth();
@@ -36,6 +37,16 @@ export default function Shop() {
       if (error) throw error;
       return data;
     },
+  });
+
+  const { data: shopSettings } = useQuery({
+    queryKey: ["shop-settings"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("shop_settings").select("*").eq("user_id", user!.id).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
   });
 
   const { data: orders } = useQuery({
@@ -183,7 +194,13 @@ export default function Shop() {
                       <Badge variant={product.is_active ? "success" : "secondary"} className="text-xs">{product.is_active ? "Active" : "Inactive"}</Badge>
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" className="w-full" onClick={() => deleteProduct.mutate(product.id)}><Trash2 className="h-3 w-3 mr-1" />Delete</Button>
+                  <div className="flex gap-1">
+                    <CheckoutButton
+                      product={{ id: product.id, name: product.name, price: Number(product.price), currency: product.currency }}
+                      shopSettings={shopSettings ? { payment_gateway: shopSettings.payment_gateway || "none", razorpay_key_id: shopSettings.razorpay_key_id, stripe_publishable_key: shopSettings.stripe_publishable_key } : null}
+                    />
+                    <Button variant="ghost" size="sm" onClick={() => deleteProduct.mutate(product.id)}><Trash2 className="h-3 w-3 mr-1" />Delete</Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
