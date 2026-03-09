@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { replaceVariables } from "@/lib/variableReplacer";
@@ -31,6 +31,45 @@ interface PageSection {
   visibility?: { hideOnMobile?: boolean; hideOnDesktop?: boolean };
 }
 
+// Inject Meta Pixel script into page head
+function injectMetaPixel(pixelId: string) {
+  if (!pixelId || document.getElementById("meta-pixel-script")) return;
+  const script = document.createElement("script");
+  script.id = "meta-pixel-script";
+  script.innerHTML = `
+    !function(f,b,e,v,n,t,s)
+    {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+    if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+    n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t,s)}(window, document,'script',
+    'https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '${pixelId}');
+    fbq('track', 'PageView');
+  `;
+  document.head.appendChild(script);
+
+  // noscript fallback
+  const noscript = document.createElement("noscript");
+  noscript.id = "meta-pixel-noscript";
+  noscript.innerHTML = `<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${pixelId}&ev=PageView&noscript=1"/>`;
+  document.head.appendChild(noscript);
+}
+
+// Fire Meta Lead event
+function fireMetaLeadEvent() {
+  if (typeof (window as any).fbq === "function") {
+    (window as any).fbq("track", "Lead", { content_name: "Form Submission" });
+  }
+}
+
+// Cleanup pixel scripts on unmount
+function cleanupMetaPixel() {
+  document.getElementById("meta-pixel-script")?.remove();
+  document.getElementById("meta-pixel-noscript")?.remove();
+}
+
 export default function PublicLandingPage() {
   const { slug } = useParams<{ slug: string }>();
   const [page, setPage] = useState<any>(null);
@@ -50,10 +89,8 @@ export default function PublicLandingPage() {
 
       if (data) {
         setPage(data);
-        // Increment views
         await supabase.from("landing_pages").update({ views_count: (data.views_count || 0) + 1 }).eq("id", data.id);
 
-        // Load dynamic variables
         const { data: vars } = await supabase
           .from("dynamic_variables")
           .select("key, value")
@@ -64,11 +101,30 @@ export default function PublicLandingPage() {
         varMap["date"] = new Date().toLocaleDateString();
         varMap["year"] = new Date().getFullYear().toString();
         setVariables(varMap);
+
+        // Load and inject Meta Pixel
+        const { data: pixels } = await supabase
+          .from("tracking_pixels")
+          .select("*")
+          .eq("user_id", data.user_id)
+          .eq("pixel_type", "meta")
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (pixels?.header_pixel_id) {
+          injectMetaPixel(pixels.header_pixel_id);
+        }
       }
       setLoading(false);
     }
     if (slug) load();
+
+    return () => cleanupMetaPixel();
   }, [slug]);
+
+  const handleFormSuccess = useCallback(() => {
+    fireMetaLeadEvent();
+  }, []);
 
   const rv = (text: string) => replaceVariables(text, variables);
 
@@ -95,19 +151,15 @@ export default function PublicLandingPage() {
   const content = Array.isArray(page.content) ? page.content : [];
   const isNested = content.length > 0 && content[0]?.rows;
 
-  // Render flat blocks (PageBlock[])
   const renderBlock = (block: PageBlock) => {
     if (shouldHide(block.advanced)) return null;
-
     switch (block.type) {
       case "hero":
         return (
           <section key={block.id} className="py-16 md:py-24 px-6 text-center bg-gradient-to-br from-primary/5 to-primary/10">
             <h1 className="text-3xl md:text-5xl font-bold mb-4">{rv(block.content.headline)}</h1>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">{rv(block.content.subheadline)}</p>
-            <button onClick={() => handleButtonClick(block.advanced)} className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition">
-              {rv(block.content.buttonText)}
-            </button>
+            <button onClick={() => handleButtonClick(block.advanced)} className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition">{rv(block.content.buttonText)}</button>
           </section>
         );
       case "cta":
@@ -115,9 +167,7 @@ export default function PublicLandingPage() {
           <section key={block.id} className="py-16 px-6 text-center bg-primary/5">
             <h2 className="text-2xl md:text-3xl font-bold mb-3">{rv(block.content.headline)}</h2>
             <p className="text-muted-foreground mb-6">{rv(block.content.subheadline)}</p>
-            <button onClick={() => handleButtonClick(block.advanced)} className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition">
-              {rv(block.content.buttonText)}
-            </button>
+            <button onClick={() => handleButtonClick(block.advanced)} className="px-8 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:opacity-90 transition">{rv(block.content.buttonText)}</button>
           </section>
         );
       case "features":
@@ -168,22 +218,11 @@ export default function PublicLandingPage() {
     }
   };
 
-  // Render nested sections (PageSection[])
   const renderSection = (section: PageSection) => {
     if (shouldHide(section.visibility)) return null;
-    
     const widthClass = section.width === "narrow" ? "max-w-3xl mx-auto" : section.width === "container" ? "max-w-6xl mx-auto" : "";
-    
     return (
-      <section
-        key={section.id}
-        id={section.name?.toLowerCase().replace(/\s+/g, "-")}
-        style={{
-          backgroundColor: section.backgroundColor || undefined,
-          paddingTop: section.paddingTop ? `${section.paddingTop}px` : undefined,
-          paddingBottom: section.paddingBottom ? `${section.paddingBottom}px` : undefined,
-        }}
-      >
+      <section key={section.id} id={section.name?.toLowerCase().replace(/\s+/g, "-")} style={{ backgroundColor: section.backgroundColor || undefined, paddingTop: section.paddingTop ? `${section.paddingTop}px` : undefined, paddingBottom: section.paddingBottom ? `${section.paddingBottom}px` : undefined }}>
         <div className={`px-6 ${widthClass}`}>
           {section.rows?.map((row) => (
             <div key={row.id} className="flex flex-wrap gap-6" style={{ alignItems: row.verticalAlign || "top" }}>
@@ -213,15 +252,11 @@ export default function PublicLandingPage() {
         return el.content.src ? <img key={el.id} src={el.content.src} alt={rv(el.content.alt)} className="rounded-lg w-full mb-4" /> : null;
       case "button":
         return (
-          <button key={el.id} onClick={() => handleButtonClick(el.buttonAction)} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium mb-4 hover:opacity-90 transition">
-            {rv(el.content.text)}
-          </button>
+          <button key={el.id} onClick={() => handleButtonClick(el.buttonAction)} className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium mb-4 hover:opacity-90 transition">{rv(el.content.text)}</button>
         );
       case "video":
         return el.content.url ? (
-          <div key={el.id} className="mb-4 aspect-video">
-            <iframe src={el.content.url} className="w-full h-full rounded-lg" allowFullScreen />
-          </div>
+          <div key={el.id} className="mb-4 aspect-video"><iframe src={el.content.url} className="w-full h-full rounded-lg" allowFullScreen /></div>
         ) : null;
       case "divider":
         return <hr key={el.id} className="my-6 border-border" />;
@@ -243,6 +278,7 @@ export default function PublicLandingPage() {
         open={showPopup}
         onOpenChange={setShowPopup}
         pageId={page.id}
+        onSuccess={handleFormSuccess}
       />
     </div>
   );

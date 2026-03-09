@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link2, Trash2, Users, Store, Map, Settings2, Variable, MessageCircle, Target } from "lucide-react";
+import { Link2, Trash2, Users, Store, Map, Settings2, Variable, MessageCircle, Target, Globe, Copy, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AppStoreIntegrations } from "@/components/settings/AppStoreIntegrations";
 import { LeadFormMapping } from "@/components/settings/LeadFormMapping";
@@ -107,10 +107,14 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="general" className="gap-1.5">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">General</span>
+          </TabsTrigger>
+          <TabsTrigger value="domain" className="gap-1.5">
+            <Globe className="h-4 w-4" />
+            <span className="hidden sm:inline">Domain</span>
           </TabsTrigger>
           <TabsTrigger value="appstore" className="gap-1.5">
             <Store className="h-4 w-4" />
@@ -211,6 +215,106 @@ export default function Settings() {
                   </div>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="domain" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                Custom Domain Setup
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <p className="text-sm text-muted-foreground">
+                Point your custom domain to this CRM by adding the following DNS records at your domain registrar (e.g. Cloudflare, GoDaddy, Namecheap).
+              </p>
+
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold">Required DNS Records</h3>
+                
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border border-border rounded-lg">
+                    <thead>
+                      <tr className="bg-muted/50">
+                        <th className="text-left p-3 font-medium">Type</th>
+                        <th className="text-left p-3 font-medium">Name / Host</th>
+                        <th className="text-left p-3 font-medium">Value / Points to</th>
+                        <th className="text-left p-3 font-medium">TTL</th>
+                        <th className="p-3 w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      <tr>
+                        <td className="p-3"><Badge variant="outline">A</Badge></td>
+                        <td className="p-3 font-mono text-xs">@</td>
+                        <td className="p-3 font-mono text-xs">185.158.133.1</td>
+                        <td className="p-3 text-muted-foreground">Auto</td>
+                        <td className="p-3">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText("185.158.133.1"); toast.success("IP copied"); }}>
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="p-3"><Badge variant="outline">A</Badge></td>
+                        <td className="p-3 font-mono text-xs">www</td>
+                        <td className="p-3 font-mono text-xs">185.158.133.1</td>
+                        <td className="p-3 text-muted-foreground">Auto</td>
+                        <td className="p-3">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText("185.158.133.1"); toast.success("IP copied"); }}>
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="p-3"><Badge variant="outline">TXT</Badge></td>
+                        <td className="p-3 font-mono text-xs">_lovable</td>
+                        <td className="p-3 font-mono text-xs break-all">lovable_verify=your-project-id</td>
+                        <td className="p-3 text-muted-foreground">Auto</td>
+                        <td className="p-3">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { navigator.clipboard.writeText("_lovable"); toast.success("Copied"); }}>
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold">Setup Steps</h3>
+                <div className="space-y-2">
+                  {[
+                    "Log in to your domain registrar (Cloudflare, GoDaddy, Namecheap, etc.)",
+                    "Navigate to DNS Management for your domain",
+                    "Add the A records above for both @ (root) and www",
+                    "Add the TXT record for domain verification",
+                    "Wait for DNS propagation (up to 72 hours)",
+                    "SSL certificate will be provisioned automatically",
+                  ].map((step, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-bold mt-0.5">
+                        {i + 1}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{step}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 bg-muted rounded-lg">
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-success shrink-0 mt-0.5" />
+                  <div className="text-xs text-muted-foreground">
+                    <p className="font-medium text-foreground mb-1">Cloudflare Users</p>
+                    <p>If using Cloudflare, set proxy status to <strong>DNS Only</strong> (grey cloud) for the A records to allow SSL provisioning.</p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
