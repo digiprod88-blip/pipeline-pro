@@ -79,9 +79,9 @@ export function AppStoreIntegrations() {
     else if (id === "whatsapp_waba") setWabaOpen(true);
     else if (id === "facebook") setFacebookOpen(true);
     else if (id === "instagram") setInstagramOpen(true);
-    else if (id === "openai") {
-      upsertConnection.mutate({ integrationId: "openai", connected: true, config: { provider: "lovable-ai" } });
-      toast.success("AI Assistant activated!");
+    else if (id === "ai_brain") {
+      upsertConnection.mutate({ integrationId: "ai_brain", connected: true, config: { provider: "lovable-ai" } });
+      toast.success("AI Brain is always active — powered by Lovable AI");
     }
   };
 
