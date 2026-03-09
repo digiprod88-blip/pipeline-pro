@@ -325,6 +325,41 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* AI Content Generation Modal */}
+      <Dialog open={showAiModal} onOpenChange={setShowAiModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Generate Content with AI
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">What would you like to create?</Label>
+              <textarea
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder="E.g., Write a compelling headline for a fitness coaching business, Create features section for a SaaS product..."
+                rows={4}
+                className="w-full p-3 border border-border rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-muted-foreground">AI will update the current block's content</p>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowAiModal(false)} disabled={aiLoading}>
+                  Cancel
+                </Button>
+                <Button onClick={generateWithAi} disabled={!aiPrompt.trim() || aiLoading}>
+                  {aiLoading ? "Generating..." : "Generate"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
