@@ -31,7 +31,7 @@ function maskPhone(phone: string): string {
 
 export default function Contacts() {
   const { user } = useAuth();
-  const { canViewPhone } = useStaffPermissions();
+  const { canViewPhone, canExport } = useStaffPermissions();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
