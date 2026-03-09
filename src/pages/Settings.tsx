@@ -315,6 +315,8 @@ export default function Settings() {
                   </div>
                 </div>
               </div>
+
+              <DnsTestButton />
             </CardContent>
           </Card>
         </TabsContent>
