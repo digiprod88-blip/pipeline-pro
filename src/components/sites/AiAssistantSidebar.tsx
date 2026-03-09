@@ -33,10 +33,13 @@ function processEditCommand(prompt: string, blocks: PageBlock[]): PageBlock[] | 
     || lower.match(/make.*(?:heading|headline|title).*(\w+)\s*color/i);
   if (colorMatch) {
     const color = colorMatch[1];
-    return blocks.map(b => ({
-      ...b,
-      advanced: { ...b.advanced, customCss: `${b.advanced?.customCss || ""}\ncolor: ${color};`.trim() },
-    }));
+    // Store color hint in content so renderer can use it
+    return blocks.map(b => {
+      if (b.content.headline !== undefined) {
+        return { ...b, content: { ...b.content, _headlineColor: color } };
+      }
+      return b;
+    });
   }
 
   // Add a features section

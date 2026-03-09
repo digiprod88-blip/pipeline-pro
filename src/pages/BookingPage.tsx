@@ -172,6 +172,12 @@ export default function BookingPage() {
             at <span className="font-medium text-foreground">{selectedSlot}</span> has been confirmed.
           </p>
           <p className="text-xs text-muted-foreground mt-4">A confirmation will be sent to {form.email}</p>
+          {zoomLink && (
+            <div className="mt-4 p-3 rounded-lg bg-secondary text-sm">
+              <p className="font-medium mb-1">📹 Zoom Meeting Link:</p>
+              <a href={zoomLink} target="_blank" rel="noopener noreferrer" className="text-primary underline break-all">{zoomLink}</a>
+            </div>
+          )}
         </Card>
       </div>
     );
