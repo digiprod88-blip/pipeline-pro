@@ -528,6 +528,36 @@ export type Database = {
         }
         Relationships: []
       }
+      dynamic_variables: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          user_id: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          user_id: string
+          value?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          user_id?: string
+          value?: string
+        }
+        Relationships: []
+      }
       landing_pages: {
         Row: {
           content: Json | null
@@ -1474,6 +1504,44 @@ export type Database = {
           },
         ]
       }
+      webhook_field_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          source_field: string
+          target_field: string
+          transform: string | null
+          user_id: string
+          webhook_key_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          source_field: string
+          target_field: string
+          transform?: string | null
+          user_id: string
+          webhook_key_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          source_field?: string
+          target_field?: string
+          transform?: string | null
+          user_id?: string
+          webhook_key_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_field_mappings_webhook_key_id_fkey"
+            columns: ["webhook_key_id"]
+            isOneToOne: false
+            referencedRelation: "webhook_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_keys: {
         Row: {
           created_at: string
@@ -1521,6 +1589,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      whatsapp_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          last_sync_at: string | null
+          phone_number: string | null
+          session_data: Json | null
+          session_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          phone_number?: string | null
+          session_data?: Json | null
+          session_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          phone_number?: string | null
+          session_data?: Json | null
+          session_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       workflow_actions: {
         Row: {
@@ -1595,6 +1696,64 @@ export type Database = {
           },
           {
             foreignKeyName: "workflow_logs_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workflow_scheduled_actions: {
+        Row: {
+          action_id: string
+          completed_at: string | null
+          contact_id: string
+          created_at: string
+          error: string | null
+          execute_at: string
+          id: string
+          status: string
+          workflow_id: string
+        }
+        Insert: {
+          action_id: string
+          completed_at?: string | null
+          contact_id: string
+          created_at?: string
+          error?: string | null
+          execute_at: string
+          id?: string
+          status?: string
+          workflow_id: string
+        }
+        Update: {
+          action_id?: string
+          completed_at?: string | null
+          contact_id?: string
+          created_at?: string
+          error?: string | null
+          execute_at?: string
+          id?: string
+          status?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_scheduled_actions_action_id_fkey"
+            columns: ["action_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_actions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_scheduled_actions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_scheduled_actions_workflow_id_fkey"
             columns: ["workflow_id"]
             isOneToOne: false
             referencedRelation: "workflows"
