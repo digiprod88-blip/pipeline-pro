@@ -34,6 +34,7 @@ const navItems = [
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { canInstall, install } = usePWAInstall();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
