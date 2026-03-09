@@ -66,6 +66,9 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [customHeadCode, setCustomHeadCode] = useState("");
   const [customBodyCode, setCustomBodyCode] = useState("");
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
