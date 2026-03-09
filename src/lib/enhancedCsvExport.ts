@@ -43,9 +43,17 @@ function escapeCsvField(field: string): string {
 }
 
 function generateCsv(headers: string[], rows: string[][]): string {
+  const CHUNK_SIZE = 500;
   const headerRow = headers.map(escapeCsvField).join(",");
-  const dataRows = rows.map(row => row.map(cell => escapeCsvField(cell || "")).join(","));
-  return [headerRow, ...dataRows].join("\n");
+  const chunks: string[] = [headerRow];
+
+  for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+    const chunk = rows.slice(i, i + CHUNK_SIZE);
+    const chunkStr = chunk.map(row => row.map(cell => escapeCsvField(cell || "")).join(",")).join("\n");
+    chunks.push(chunkStr);
+  }
+
+  return chunks.join("\n");
 }
 
 function downloadFile(content: string, filename: string) {
@@ -100,21 +108,22 @@ export async function exportLeadDetails(contacts: Contact[]) {
 }
 
 export async function exportInteractionHistory(contactIds: string[]) {
-  // Fetch messages for selected contacts
-  const { data: messages } = await supabase
-    .from("messages")
-    .select("*")
-    .in("contact_id", contactIds)
-    .order("created_at", { ascending: false })
-    .limit(1000);
+  // Fetch in batches to avoid hitting the 1000 row limit
+  const BATCH_SIZE = 50;
+  let allMessages: any[] = [];
+  let allActivities: any[] = [];
 
-  // Fetch activities for selected contacts
-  const { data: activities } = await supabase
-    .from("activities")
-    .select("*")
-    .in("contact_id", contactIds)
-    .order("created_at", { ascending: false })
-    .limit(1000);
+  for (let i = 0; i < contactIds.length; i += BATCH_SIZE) {
+    const batch = contactIds.slice(i, i + BATCH_SIZE);
+
+    const [msgResult, actResult] = await Promise.all([
+      supabase.from("messages").select("*").in("contact_id", batch).order("created_at", { ascending: false }),
+      supabase.from("activities").select("*").in("contact_id", batch).order("created_at", { ascending: false }),
+    ]);
+
+    if (msgResult.data) allMessages = allMessages.concat(msgResult.data);
+    if (actResult.data) allActivities = allActivities.concat(actResult.data);
+  }
 
   const headers = [
     "Contact ID",
@@ -125,7 +134,7 @@ export async function exportInteractionHistory(contactIds: string[]) {
     "Timestamp",
   ];
 
-  const messageRows = (messages || []).map(m => [
+  const messageRows = allMessages.map(m => [
     m.contact_id,
     "Message",
     m.direction,
@@ -134,7 +143,7 @@ export async function exportInteractionHistory(contactIds: string[]) {
     format(new Date(m.created_at), "yyyy-MM-dd HH:mm:ss"),
   ]);
 
-  const activityRows = (activities || []).map(a => [
+  const activityRows = allActivities.map(a => [
     a.contact_id || "",
     "Activity",
     a.type,

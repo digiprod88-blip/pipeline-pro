@@ -76,7 +76,7 @@ export default function TeamManagement() {
 
   // Update role
   const updateRole = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: { role?: string; hide_phone?: boolean; pipeline_access?: string } }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: { role?: string; hide_phone?: boolean; hide_finance?: boolean; pipeline_access?: string } }) => {
       const { error } = await supabase
         .from("user_roles")
         .update(updates as any)
@@ -165,6 +165,7 @@ export default function TeamManagement() {
                 <TableHead>Role</TableHead>
                 <TableHead>Pipeline Access</TableHead>
                 <TableHead>Hide Phone</TableHead>
+                <TableHead>Hide Finance</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -232,12 +233,21 @@ export default function TeamManagement() {
                         disabled={isCurrentUser}
                       />
                     </TableCell>
+                    <TableCell>
+                      <Switch
+                        checked={member.hide_finance}
+                        onCheckedChange={(checked) =>
+                          updateRole.mutate({ id: member.id, updates: { hide_finance: checked } })
+                        }
+                        disabled={isCurrentUser}
+                      />
+                    </TableCell>
                   </TableRow>
                 );
               })}
               {(!members || members.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                     No team members found.
                   </TableCell>
                 </TableRow>

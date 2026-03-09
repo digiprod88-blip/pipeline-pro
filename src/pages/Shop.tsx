@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useStaffPermissions } from "@/hooks/useStaffPermissions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,13 +13,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Package, ShoppingCart, Trash2, DollarSign, IndianRupee, FileDown } from "lucide-react";
+import { Plus, Package, ShoppingCart, Trash2, DollarSign, IndianRupee, FileDown, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { downloadInvoice } from "@/lib/invoice";
+import { ShopSettings } from "@/components/shop/ShopSettings";
 
 export default function Shop() {
   const { user } = useAuth();
+  const { canViewFinance } = useStaffPermissions();
   const queryClient = useQueryClient();
   const [openProduct, setOpenProduct] = useState(false);
 
@@ -86,7 +89,7 @@ export default function Shop() {
     },
   });
 
-  const totalRevenue = orders?.filter(o => o.status === "paid").reduce((s, o) => s + Number(o.amount), 0) || 0;
+  const totalRevenue = canViewFinance ? (orders?.filter(o => o.status === "paid").reduce((s, o) => s + Number(o.amount), 0) || 0) : null;
   const pendingOrders = orders?.filter(o => o.status === "pending").length || 0;
 
   const CurrencyIcon = productForm.currency === "INR" ? IndianRupee : DollarSign;
@@ -144,13 +147,16 @@ export default function Shop() {
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{products?.length || 0}</p><p className="text-xs text-muted-foreground">Products</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{orders?.length || 0}</p><p className="text-xs text-muted-foreground">Total Orders</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{pendingOrders}</p><p className="text-xs text-muted-foreground">Pending</p></CardContent></Card>
-        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">₹{totalRevenue.toLocaleString()}</p><p className="text-xs text-muted-foreground">Revenue</p></CardContent></Card>
+        {canViewFinance && (
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">₹{totalRevenue?.toLocaleString()}</p><p className="text-xs text-muted-foreground">Revenue</p></CardContent></Card>
+        )}
       </div>
 
       <Tabs defaultValue="products">
         <TabsList>
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="settings"><Settings className="h-4 w-4 mr-1" />Shop Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="products" className="mt-4">
@@ -167,7 +173,11 @@ export default function Shop() {
                 <CardContent className="space-y-2">
                   {product.description && <p className="text-xs text-muted-foreground">{product.description}</p>}
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">{product.currency === "INR" ? "₹" : "$"}{Number(product.price).toLocaleString()}</span>
+                    {canViewFinance ? (
+                      <span className="font-semibold">{product.currency === "INR" ? "₹" : "$"}{Number(product.price).toLocaleString()}</span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">Price hidden</span>
+                    )}
                     <div className="flex items-center gap-1">
                       <Badge variant="outline" className="capitalize text-xs">{product.product_type}</Badge>
                       <Badge variant={product.is_active ? "success" : "secondary"} className="text-xs">{product.is_active ? "Active" : "Inactive"}</Badge>
@@ -200,7 +210,11 @@ export default function Shop() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{order.currency === "INR" ? "₹" : "$"}{Number(order.amount).toLocaleString()}</span>
+                      {canViewFinance ? (
+                        <span className="font-medium text-sm">{order.currency === "INR" ? "₹" : "$"}{Number(order.amount).toLocaleString()}</span>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
                       <Badge variant={order.status === "paid" ? "success" : order.status === "pending" ? "warm" : "secondary"} className="capitalize text-xs">{order.status}</Badge>
                       <Button
                         variant="ghost"
@@ -234,6 +248,10 @@ export default function Shop() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-4">
+          <ShopSettings />
         </TabsContent>
       </Tabs>
     </div>

@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
-import { Plus, CalendarDays, Clock, MapPin, Trash2, Copy } from "lucide-react";
+import { Plus, CalendarDays, Clock, MapPin, Trash2, Copy, Video, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format, startOfDay, endOfDay, addHours, isSameDay } from "date-fns";
 
@@ -25,8 +26,9 @@ export default function CalendarPage() {
   const [openSlots, setOpenSlots] = useState(false);
 
   const [apptForm, setApptForm] = useState({
-    title: "", description: "", start_time: "", end_time: "", location: "",
+    title: "", description: "", start_time: "", end_time: "", location: "", createZoom: false,
   });
+  const [isCreatingZoom, setIsCreatingZoom] = useState(false);
 
   const { data: appointments } = useQuery({
     queryKey: ["appointments"],
@@ -59,6 +61,40 @@ export default function CalendarPage() {
 
   const createAppointment = useMutation({
     mutationFn: async () => {
+      let location = apptForm.location || null;
+
+      // Create Zoom meeting if requested
+      if (apptForm.createZoom && apptForm.start_time) {
+        setIsCreatingZoom(true);
+        try {
+          const startTime = new Date(apptForm.start_time);
+          const endTime = apptForm.end_time ? new Date(apptForm.end_time) : addHours(startTime, 1);
+          const duration = Math.round((endTime.getTime() - startTime.getTime()) / 60000);
+
+          const { data, error } = await supabase.functions.invoke("zoom-meeting", {
+            body: {
+              action: "create",
+              topic: apptForm.title,
+              start_time: startTime.toISOString(),
+              duration,
+              agenda: apptForm.description || "",
+            },
+          });
+
+          if (error) {
+            console.error("Zoom error:", error);
+            toast.error("Zoom meeting creation failed, continuing without link");
+          } else if (data?.join_url) {
+            location = data.join_url;
+            toast.success("Zoom meeting created!");
+          }
+        } catch (err) {
+          console.error("Zoom error:", err);
+        } finally {
+          setIsCreatingZoom(false);
+        }
+      }
+
       const { error } = await supabase.from("appointments").insert({
         user_id: user!.id,
         contact_id: selectedContact || null,
@@ -66,14 +102,14 @@ export default function CalendarPage() {
         description: apptForm.description || null,
         start_time: apptForm.start_time,
         end_time: apptForm.end_time,
-        location: apptForm.location || null,
+        location,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["appointments"] });
       setOpenAppt(false);
-      setApptForm({ title: "", description: "", start_time: "", end_time: "", location: "" });
+      setApptForm({ title: "", description: "", start_time: "", end_time: "", location: "", createZoom: false });
       setSelectedContact("");
       toast.success("Appointment created!");
     },
@@ -187,7 +223,20 @@ export default function CalendarPage() {
                   <div><Label>End</Label><Input type="datetime-local" value={apptForm.end_time} onChange={e => setApptForm({ ...apptForm, end_time: e.target.value })} /></div>
                 </div>
                 <div><Label>Location</Label><Input value={apptForm.location} onChange={e => setApptForm({ ...apptForm, location: e.target.value })} placeholder="Office / Zoom link" /></div>
-                <Button className="w-full" onClick={() => createAppointment.mutate()} disabled={!apptForm.title || !apptForm.start_time || !apptForm.end_time}>Create</Button>
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <Label className="flex items-center gap-2"><Video className="h-4 w-4" />Create Zoom Meeting</Label>
+                    <p className="text-xs text-muted-foreground">Auto-generate a Zoom link for this appointment</p>
+                  </div>
+                  <Switch checked={apptForm.createZoom} onCheckedChange={(v) => setApptForm({ ...apptForm, createZoom: v })} />
+                </div>
+                <Button className="w-full" onClick={() => createAppointment.mutate()} disabled={!apptForm.title || !apptForm.start_time || !apptForm.end_time || createAppointment.isPending || isCreatingZoom}>
+                  {isCreatingZoom ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating Zoom...</>
+                  ) : (
+                    "Create"
+                  )}
+                </Button>
               </div>
             </DialogContent>
           </Dialog>

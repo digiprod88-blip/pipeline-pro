@@ -69,35 +69,53 @@ export function WhatsAppQRConnection() {
     },
   });
 
-  // Poll for connection status
+  // Poll for connection status with retry logic
   useEffect(() => {
     if (!polling) return;
 
-    const interval = setInterval(async () => {
-      const { data } = await supabase
-        .from("whatsapp_sessions")
-        .select("session_status, phone_number")
-        .eq("user_id", user!.id)
-        .single();
+    let retryCount = 0;
+    const MAX_RETRIES = 40; // 40 * 3s = 120s
+    let isCancelled = false;
 
-      if (data?.session_status === "connected") {
-        setPolling(false);
-        setQrCode(null);
-        queryClient.invalidateQueries({ queryKey: ["whatsapp-session"] });
-        toast.success("WhatsApp connected successfully!");
+    const poll = async () => {
+      if (isCancelled || retryCount >= MAX_RETRIES) {
+        if (!isCancelled && retryCount >= MAX_RETRIES) {
+          setPolling(false);
+          setQrCode(null);
+          toast.error("QR code expired. Please try again.");
+        }
+        return;
       }
-    }, 3000);
 
-    // Stop polling after 2 minutes
-    const timeout = setTimeout(() => {
-      setPolling(false);
-      setQrCode(null);
-      toast.error("QR code expired. Please try again.");
-    }, 120000);
+      retryCount++;
+
+      try {
+        const { data } = await supabase
+          .from("whatsapp_sessions")
+          .select("session_status, phone_number")
+          .eq("user_id", user!.id)
+          .maybeSingle();
+
+        if (data?.session_status === "connected") {
+          setPolling(false);
+          setQrCode(null);
+          queryClient.invalidateQueries({ queryKey: ["whatsapp-session"] });
+          toast.success("WhatsApp connected successfully!");
+          return;
+        }
+      } catch (err) {
+        console.warn("WhatsApp poll error:", err);
+      }
+
+      if (!isCancelled) {
+        setTimeout(poll, 3000);
+      }
+    };
+
+    poll();
 
     return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
+      isCancelled = true;
     };
   }, [polling, user, queryClient]);
 
