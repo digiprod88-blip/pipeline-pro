@@ -97,6 +97,18 @@ function BlockPreview({ block }: { block: PageBlock }) {
           </div>
         </div>
       );
+    case "popup_form":
+      return (
+        <div className="py-4 px-4 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg border border-primary/20">
+            <FormInput className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium text-primary">Popup Form</span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            {block.content.formTitle} - Appears when button is clicked
+          </p>
+        </div>
+      );
     default:
       return null;
   }
