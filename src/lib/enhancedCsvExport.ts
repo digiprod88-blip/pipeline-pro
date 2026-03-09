@@ -134,7 +134,7 @@ export async function exportInteractionHistory(contactIds: string[]) {
     "Timestamp",
   ];
 
-  const messageRows = (messages || []).map(m => [
+  const messageRows = allMessages.map(m => [
     m.contact_id,
     "Message",
     m.direction,
@@ -143,7 +143,7 @@ export async function exportInteractionHistory(contactIds: string[]) {
     format(new Date(m.created_at), "yyyy-MM-dd HH:mm:ss"),
   ]);
 
-  const activityRows = (activities || []).map(a => [
+  const activityRows = allActivities.map(a => [
     a.contact_id || "",
     "Activity",
     a.type,
