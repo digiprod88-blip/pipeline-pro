@@ -89,7 +89,7 @@ export default function Shop() {
     },
   });
 
-  const totalRevenue = orders?.filter(o => o.status === "paid").reduce((s, o) => s + Number(o.amount), 0) || 0;
+  const totalRevenue = canViewFinance ? (orders?.filter(o => o.status === "paid").reduce((s, o) => s + Number(o.amount), 0) || 0) : null;
   const pendingOrders = orders?.filter(o => o.status === "pending").length || 0;
 
   const CurrencyIcon = productForm.currency === "INR" ? IndianRupee : DollarSign;
