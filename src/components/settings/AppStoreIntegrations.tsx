@@ -21,7 +21,7 @@ const INTEGRATIONS_META = [
   { id: "whatsapp_waba", name: "WhatsApp WABA", description: "Business API — for bulk campaigns & automated messages", icon: Radio, category: "whatsapp" },
   { id: "facebook", name: "Facebook Pages", description: "Connect Facebook Lead Forms to capture leads automatically", icon: Facebook, category: "social" },
   { id: "instagram", name: "Instagram", description: "Connect Instagram DMs and lead forms", icon: Instagram, category: "social" },
-  { id: "openai", name: "AI Assistant", description: "AI-powered content generation and smart responses (built-in)", icon: Brain, category: "ai" },
+  { id: "ai_brain", name: "AI Brain (Lovable AI)", description: "Powered by Google Gemini & GPT-5 — Content generation & smart auto-replies", icon: Brain, category: "ai" },
 ];
 
 export function AppStoreIntegrations() {
