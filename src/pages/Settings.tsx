@@ -107,10 +107,14 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="general" className="gap-1.5">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">General</span>
+          </TabsTrigger>
+          <TabsTrigger value="domain" className="gap-1.5">
+            <Globe className="h-4 w-4" />
+            <span className="hidden sm:inline">Domain</span>
           </TabsTrigger>
           <TabsTrigger value="appstore" className="gap-1.5">
             <Store className="h-4 w-4" />
