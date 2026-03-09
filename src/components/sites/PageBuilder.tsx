@@ -274,6 +274,44 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
           </Sheet>
         </>
       )}
+      {/* Custom Code Injection Modal */}
+      <Dialog open={showCodeModal} onOpenChange={setShowCodeModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Code className="h-5 w-5" />
+              Custom Code Injection
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Head Code (Meta Pixel, Analytics, etc.)</Label>
+              <Textarea
+                value={customHeadCode}
+                onChange={(e) => setCustomHeadCode(e.target.value)}
+                placeholder={'<!-- Facebook Pixel Code -->\n<script>...</script>'}
+                rows={5}
+                className="font-mono text-xs"
+              />
+              <p className="text-xs text-muted-foreground">Code injected into {"<head>"} of the published page</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Body Code (Chat widgets, etc.)</Label>
+              <Textarea
+                value={customBodyCode}
+                onChange={(e) => setCustomBodyCode(e.target.value)}
+                placeholder={'<!-- Chat widget -->\n<script>...</script>'}
+                rows={4}
+                className="font-mono text-xs"
+              />
+              <p className="text-xs text-muted-foreground">Code injected before {"</body>"} of the published page</p>
+            </div>
+            <Button className="w-full" onClick={() => { setShowCodeModal(false); toast.success("Custom code saved with page"); }}>
+              Save Code
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
