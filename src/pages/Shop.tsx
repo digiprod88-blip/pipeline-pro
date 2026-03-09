@@ -173,7 +173,11 @@ export default function Shop() {
                 <CardContent className="space-y-2">
                   {product.description && <p className="text-xs text-muted-foreground">{product.description}</p>}
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold">{product.currency === "INR" ? "₹" : "$"}{Number(product.price).toLocaleString()}</span>
+                    {canViewFinance ? (
+                      <span className="font-semibold">{product.currency === "INR" ? "₹" : "$"}{Number(product.price).toLocaleString()}</span>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">Price hidden</span>
+                    )}
                     <div className="flex items-center gap-1">
                       <Badge variant="outline" className="capitalize text-xs">{product.product_type}</Badge>
                       <Badge variant={product.is_active ? "success" : "secondary"} className="text-xs">{product.is_active ? "Active" : "Inactive"}</Badge>
