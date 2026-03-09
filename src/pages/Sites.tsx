@@ -131,7 +131,8 @@ export default function Sites() {
     const existingContent = Array.isArray(builderPage.content) ? builderPage.content : [];
     
     // Check if content is nested (PageSection[]) or flat (PageBlock[])
-    const isNested = existingContent.length > 0 && 'rows' in (existingContent[0] || {});
+    const firstItem = existingContent[0];
+    const isNested = existingContent.length > 0 && typeof firstItem === 'object' && firstItem !== null && 'rows' in firstItem;
     
     if (useNestedBuilder || isNested) {
       const sections = isNested ? (existingContent as unknown as PageSection[]) : [];
