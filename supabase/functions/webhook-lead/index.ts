@@ -150,6 +150,36 @@ serve(async (req) => {
       link: `/contacts/${contact.id}`,
     });
 
+    // ── Trigger active workflows with "new_lead" or "webhook" trigger ──
+    const { data: workflows } = await supabase
+      .from("workflows")
+      .select("id, trigger_type")
+      .eq("user_id", webhook.user_id)
+      .eq("is_active", true)
+      .in("trigger_type", ["new_lead", "webhook"]);
+
+    if (workflows && workflows.length > 0) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      for (const wf of workflows) {
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/workflow-executor`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${supabaseKey}`,
+            },
+            body: JSON.stringify({
+              workflow_id: wf.id,
+              contact_id: contact.id,
+              trigger_type: wf.trigger_type,
+            }),
+          });
+        } catch (e) {
+          console.error(`Failed to trigger workflow ${wf.id}:`, e);
+        }
+      }
+    }
+
     return new Response(
       JSON.stringify({ success: true, contact_id: contact.id }),
       {
