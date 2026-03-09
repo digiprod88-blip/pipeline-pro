@@ -241,9 +241,8 @@ export default function PublicLandingPage() {
       }
       <PopupFormModal
         open={showPopup}
-        onClose={() => setShowPopup(false)}
+        onOpenChange={setShowPopup}
         pageId={page.id}
-        userId={page.user_id}
       />
     </div>
   );

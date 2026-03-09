@@ -77,6 +77,7 @@ const App = () => (
             }
           />
           <Route path="/book/:userId" element={<BookingPage />} />
+          <Route path="/p/:slug" element={<PublicLandingPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
