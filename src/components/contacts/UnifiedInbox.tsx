@@ -43,12 +43,12 @@ export function UnifiedInbox({ contactId }: UnifiedInboxProps) {
     enabled: !!contactId,
   });
 
-  // Realtime subscription
+  // Realtime subscription for messages
   useEffect(() => {
-    const channel = supabase
+    const msgChannel = supabase
       .channel(`messages-${contactId}`)
       .on("postgres_changes", {
-        event: "INSERT",
+        event: "*",
         schema: "public",
         table: "messages",
         filter: `contact_id=eq.${contactId}`,
@@ -57,7 +57,22 @@ export function UnifiedInbox({ contactId }: UnifiedInboxProps) {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    // Also listen for whatsapp session changes
+    const waChannel = supabase
+      .channel(`wa-sessions-${contactId}`)
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "whatsapp_sessions",
+      }, () => {
+        queryClient.invalidateQueries({ queryKey: ["messages", contactId] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(msgChannel);
+      supabase.removeChannel(waChannel);
+    };
   }, [contactId, queryClient]);
 
   // Auto-scroll on new messages
