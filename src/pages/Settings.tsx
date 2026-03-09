@@ -8,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link2, Trash2, Users, Store, Map, Settings2, Variable, MessageCircle, Target, Globe, Copy, CheckCircle } from "lucide-react";
+import { Link2, Trash2, Users, Store, Map, Settings2, Variable, MessageCircle, Target, Globe, Copy, CheckCircle, Webhook } from "lucide-react";
 import { toast } from "sonner";
 import { AppStoreIntegrations } from "@/components/settings/AppStoreIntegrations";
 import { LeadFormMapping } from "@/components/settings/LeadFormMapping";
 import { DynamicVariables } from "@/components/settings/DynamicVariables";
 import { WhatsAppQRConnection } from "@/components/settings/WhatsAppQRConnection";
 import { MetaPixelSettings } from "@/components/settings/MetaPixelSettings";
+import { WebhooksSettings } from "@/components/settings/WebhooksSettings";
 
 function DnsTestButton() {
   const [domain, setDomain] = useState("");
@@ -151,7 +152,7 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="general" className="gap-1.5">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">General</span>
@@ -179,6 +180,10 @@ export default function Settings() {
           <TabsTrigger value="pixel" className="gap-1.5">
             <Target className="h-4 w-4" />
             <span className="hidden sm:inline">Pixels</span>
+          </TabsTrigger>
+          <TabsTrigger value="webhooks" className="gap-1.5">
+            <Webhook className="h-4 w-4" />
+            <span className="hidden sm:inline">Webhooks</span>
           </TabsTrigger>
         </TabsList>
 
@@ -383,6 +388,10 @@ export default function Settings() {
 
         <TabsContent value="pixel" className="mt-6">
           <MetaPixelSettings />
+        </TabsContent>
+
+        <TabsContent value="webhooks" className="mt-6">
+          <WebhooksSettings />
         </TabsContent>
       </Tabs>
     </div>
