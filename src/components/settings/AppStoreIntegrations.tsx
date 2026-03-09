@@ -21,7 +21,7 @@ const INTEGRATIONS_META = [
   { id: "whatsapp_waba", name: "WhatsApp WABA", description: "Business API — for bulk campaigns & automated messages", icon: Radio, category: "whatsapp" },
   { id: "facebook", name: "Facebook Pages", description: "Connect Facebook Lead Forms to capture leads automatically", icon: Facebook, category: "social" },
   { id: "instagram", name: "Instagram", description: "Connect Instagram DMs and lead forms", icon: Instagram, category: "social" },
-  { id: "openai", name: "AI Assistant", description: "AI-powered content generation and smart responses (built-in)", icon: Brain, category: "ai" },
+  { id: "ai_brain", name: "AI Brain (Lovable AI)", description: "Powered by Google Gemini & GPT-5 — Content generation & smart auto-replies", icon: Brain, category: "ai" },
 ];
 
 export function AppStoreIntegrations() {
@@ -79,9 +79,9 @@ export function AppStoreIntegrations() {
     else if (id === "whatsapp_waba") setWabaOpen(true);
     else if (id === "facebook") setFacebookOpen(true);
     else if (id === "instagram") setInstagramOpen(true);
-    else if (id === "openai") {
-      upsertConnection.mutate({ integrationId: "openai", connected: true, config: { provider: "lovable-ai" } });
-      toast.success("AI Assistant activated!");
+    else if (id === "ai_brain") {
+      upsertConnection.mutate({ integrationId: "ai_brain", connected: true, config: { provider: "lovable-ai" } });
+      toast.success("AI Brain is always active — powered by Lovable AI");
     }
   };
 

@@ -24,7 +24,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  ArrowLeft, Save, Plus, Type, Image, Star, MessageSquare, Layout, Zap, FormInput, Settings2, Code,
+  ArrowLeft, Save, Plus, Type, Image, Star, MessageSquare, Layout, Zap, FormInput, Settings2, Code, Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -66,6 +66,9 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [customHeadCode, setCustomHeadCode] = useState("");
   const [customBodyCode, setCustomBodyCode] = useState("");
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -104,6 +107,50 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
   const removeBlock = (blockId: string) => {
     setBlocks((prev) => prev.filter((b) => b.id !== blockId));
     if (selectedBlock === blockId) setSelectedBlock(null);
+  };
+
+  const generateWithAi = async () => {
+    if (!aiPrompt.trim()) return;
+    setAiLoading(true);
+    try {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const response = await fetch(`https://${projectId}.supabase.co/functions/v1/ai-landing-page`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${anonKey}`,
+        },
+        body: JSON.stringify({ prompt: aiPrompt }),
+      });
+      if (!response.ok) throw new Error("Failed to generate content");
+      const data = await response.json();
+      
+      if (selectedBlock) {
+        const block = blocks.find(b => b.id === selectedBlock);
+        if (!block) return;
+        
+        // Map AI response to block content
+        const newContent = { ...block.content };
+        if (data.headline) newContent.headline = data.headline;
+        if (data.subheadline) newContent.subheadline = data.subheadline;
+        if (data.cta_text) newContent.buttonText = data.cta_text;
+        if (data.sections?.[0]) {
+          newContent.heading = data.sections[0].title;
+          newContent.body = data.sections[0].content;
+        }
+        
+        setBlocks(prev => prev.map(b => b.id === selectedBlock ? { ...b, content: newContent } : b));
+        toast.success("AI content generated!");
+      }
+      setShowAiModal(false);
+      setAiPrompt("");
+    } catch (e) {
+      toast.error("Failed to generate AI content");
+      console.error(e);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const selectedBlockData = blocks.find((b) => b.id === selectedBlock);
@@ -190,6 +237,12 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
                   <TabsTrigger value="advanced" className="text-xs"><Settings2 className="h-3 w-3 mr-1" />Advanced</TabsTrigger>
                 </TabsList>
                 <TabsContent value="content" className="space-y-4 mt-0">
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setShowAiModal(true)} className="text-xs">
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Ask AI
+                    </Button>
+                  </div>
                   {Object.entries(selectedBlockData.content).map(([key, value]) => (
                     <div key={key} className="space-y-1">
                       <label className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1").replace(/(\d+)/g, " $1")}</label>
@@ -220,6 +273,12 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
                   <TabsTrigger value="advanced" className="text-xs">Advanced</TabsTrigger>
                 </TabsList>
                 <TabsContent value="content" className="space-y-4 pb-6">
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setShowAiModal(true)} className="text-xs">
+                      <Sparkles className="h-3 w-3 mr-1" />
+                      Ask AI
+                    </Button>
+                  </div>
                   {Object.entries(selectedBlockData.content).map(([key, value]) => (
                     <div key={key} className="space-y-1">
                       <label className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1").replace(/(\d+)/g, " $1")}</label>
@@ -263,6 +322,41 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
             <Button className="w-full" onClick={() => { setShowCodeModal(false); toast.success("Custom code saved with page"); }}>
               Save Code
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Content Generation Modal */}
+      <Dialog open={showAiModal} onOpenChange={setShowAiModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Generate Content with AI
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">What would you like to create?</Label>
+              <textarea
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                placeholder="E.g., Write a compelling headline for a fitness coaching business, Create features section for a SaaS product..."
+                rows={4}
+                className="w-full p-3 border border-border rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-muted-foreground">AI will update the current block's content</p>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowAiModal(false)} disabled={aiLoading}>
+                  Cancel
+                </Button>
+                <Button onClick={generateWithAi} disabled={!aiPrompt.trim() || aiLoading}>
+                  {aiLoading ? "Generating..." : "Generate"}
+                </Button>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

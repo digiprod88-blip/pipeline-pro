@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
 import {
-  Users, DollarSign, TrendingUp, CheckSquare, AlertCircle, Clock, CheckCircle2,
+  Users, DollarSign, TrendingUp, CheckSquare, AlertCircle, Clock,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,8 +13,8 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import HotLeadsWidget from "@/components/dashboard/HotLeadsWidget";
-import LeadScoreBadge from "@/components/dashboard/LeadScoreBadge";
-import TeamLeaderboard from "@/components/dashboard/TeamLeaderboard";
+import { ConversionFunnel } from "@/components/reports/ConversionFunnel";
+import { ROIDashboard } from "@/components/reports/ROIDashboard";
 
 function StatCard({ title, value, icon: Icon, description, delay = 0 }: {
   title: string; value: string | number; icon: React.ElementType; description?: string; delay?: number;
@@ -161,11 +161,18 @@ export default function Dashboard() {
         </motion.div>
       </div>
 
-      {/* Team Leaderboard */}
-      <TeamLeaderboard />
+      {/* Priority Leads & Analytics Row */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <HotLeadsWidget />
+        <ConversionFunnel steps={[
+          { label: "Visitors", count: contacts?.length || 0, color: "hsl(var(--primary))" },
+          { label: "Leads", count: totalLeads, color: "hsl(var(--warning))" },
+          { label: "Customers", count: totalCustomers, color: "hsl(var(--success))" },
+        ]} />
+      </div>
 
-      {/* Priority Leads */}
-      <HotLeadsWidget />
+      {/* ROI Analytics */}
+      <ROIDashboard dateRange="30" />
 
       {/* Follow-ups & Recent Leads */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -221,7 +228,9 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <LeadScoreBadge score={contact.lead_score ?? 0} />
+                  {contact.lead_score > 0 && (
+                    <span className="text-xs font-medium text-primary">{contact.lead_score} pts</span>
+                  )}
                   {contact.value && Number(contact.value) > 0 && (
                     <span className="text-xs text-muted-foreground">${Number(contact.value).toLocaleString()}</span>
                   )}
