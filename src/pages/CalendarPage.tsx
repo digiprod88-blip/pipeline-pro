@@ -246,7 +246,17 @@ export default function CalendarPage() {
       <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
         <Card>
           <CardContent className="p-3">
-            <Calendar mode="single" selected={selectedDate} onSelect={(d) => d && setSelectedDate(d)} />
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={(d) => d && setSelectedDate(d)}
+              modifiers={{
+                booked: appointments?.map(a => new Date(a.start_time)) || [],
+              }}
+              modifiersStyles={{
+                booked: { backgroundColor: "hsl(var(--primary) / 0.15)", color: "hsl(var(--primary))", fontWeight: "bold" },
+              }}
+            />
           </CardContent>
         </Card>
 
