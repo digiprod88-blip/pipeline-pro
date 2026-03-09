@@ -61,6 +61,9 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
   const [blocks, setBlocks] = useState<PageBlock[]>(initialBlocks);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [showPalette, setShowPalette] = useState(false);
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [customHeadCode, setCustomHeadCode] = useState("");
+  const [customBodyCode, setCustomBodyCode] = useState("");
 
   // Add TouchSensor for mobile support
   const sensors = useSensors(
