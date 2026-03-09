@@ -249,6 +249,10 @@ export default function Shop() {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="settings" className="mt-4">
+          <ShopSettings />
+        </TabsContent>
       </Tabs>
     </div>
   );
