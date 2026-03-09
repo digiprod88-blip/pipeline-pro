@@ -128,12 +128,32 @@ export default function Sites() {
   // Page Builder Mode
   const builderPage = builderPageId ? pages.find((p: any) => p.id === builderPageId) : null;
   if (builderPage) {
-    const existingBlocks = Array.isArray(builderPage.content) ? (builderPage.content as unknown as PageBlock[]) : [];
+    const existingContent = Array.isArray(builderPage.content) ? builderPage.content : [];
+    
+    // Check if content is nested (PageSection[]) or flat (PageBlock[])
+    const isNested = existingContent.length > 0 && 'rows' in (existingContent[0] || {});
+    
+    if (useNestedBuilder || isNested) {
+      const sections = isNested ? (existingContent as unknown as PageSection[]) : [];
+      return (
+        <NestedPageBuilder
+          pageId={builderPage.id}
+          pageTitle={builderPage.title}
+          initialSections={sections}
+          onSave={(sections) => saveBlocksMutation.mutate({ id: builderPage.id, blocks: sections })}
+          onBack={() => setBuilderPageId(null)}
+          saving={saveBlocksMutation.isPending}
+        />
+      );
+    }
+    
+    // Fallback to flat builder
+    const blocks = existingContent as unknown as PageBlock[];
     return (
       <PageBuilder
         pageId={builderPage.id}
         pageTitle={builderPage.title}
-        initialBlocks={existingBlocks}
+        initialBlocks={blocks}
         onSave={(blocks) => saveBlocksMutation.mutate({ id: builderPage.id, blocks })}
         onBack={() => setBuilderPageId(null)}
         saving={saveBlocksMutation.isPending}
