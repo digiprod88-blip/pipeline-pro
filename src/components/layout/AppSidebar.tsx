@@ -81,7 +81,16 @@ export function AppSidebar() {
         })}
       </nav>
 
-      <div className="border-t border-sidebar-border p-2.5">
+      <div className="border-t border-sidebar-border p-2.5 space-y-1">
+        {canInstall && (
+          <Button
+            variant="outline"
+            className="w-full justify-start gap-2.5 text-xs h-8 border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
+            onClick={install}
+          >
+            <Download className="h-3.5 w-3.5" />Install App
+          </Button>
+        )}
         <Button variant="ghost" className="w-full justify-start gap-2.5 text-xs text-muted-foreground hover:text-foreground h-8" onClick={handleLogout}>
           <LogOut className="h-3.5 w-3.5" />Sign out
         </Button>
