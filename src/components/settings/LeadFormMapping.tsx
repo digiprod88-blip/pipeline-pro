@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,41 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { 
-  Facebook, 
-  ArrowRight, 
-  Plus,
-  Trash2,
-  Check,
-  AlertCircle,
-  Settings2,
-  RefreshCw
-} from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Facebook, ArrowRight, Plus, Trash2, AlertCircle, Settings2, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
-
-interface FieldMapping {
-  id: string;
-  sourceField: string;
-  targetField: string;
-}
-
-interface LeadForm {
-  id: string;
-  name: string;
-  platform: "facebook" | "instagram" | "pabbly";
-  pageId?: string;
-  pageName?: string;
-  mappings: FieldMapping[];
-  isActive: boolean;
-  leadsCount: number;
-}
 
 const CRM_FIELDS = [
   { value: "first_name", label: "First Name" },
@@ -51,130 +22,118 @@ const CRM_FIELDS = [
   { value: "notes", label: "Notes" },
   { value: "source", label: "Source" },
   { value: "tags", label: "Tags" },
-  { value: "custom_1", label: "Custom Field 1" },
-  { value: "custom_2", label: "Custom Field 2" },
-];
-
-const SAMPLE_FORMS: LeadForm[] = [
-  {
-    id: "1",
-    name: "Webinar Registration Form",
-    platform: "facebook",
-    pageId: "123456",
-    pageName: "My Business Page",
-    mappings: [
-      { id: "m1", sourceField: "full_name", targetField: "first_name" },
-      { id: "m2", sourceField: "email", targetField: "email" },
-      { id: "m3", sourceField: "phone_number", targetField: "phone" },
-    ],
-    isActive: true,
-    leadsCount: 127,
-  },
 ];
 
 export function LeadFormMapping() {
-  const [forms, setForms] = useState<LeadForm[]>(SAMPLE_FORMS);
-  const [editingForm, setEditingForm] = useState<LeadForm | null>(null);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [addFormOpen, setAddFormOpen] = useState(false);
+  const [newFormName, setNewFormName] = useState("");
+  const [newFormPlatform, setNewFormPlatform] = useState("facebook");
   const [newSourceField, setNewSourceField] = useState("");
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  const handleToggleForm = (formId: string) => {
-    setForms(prev =>
-      prev.map(f =>
-        f.id === formId ? { ...f, isActive: !f.isActive } : f
-      )
-    );
-    toast.success("Form status updated");
-  };
+  // Fetch webhook keys (forms)
+  const { data: webhookKeys } = useQuery({
+    queryKey: ["webhook-keys"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("webhook_keys")
+        .select("*, webhook_field_mappings(*)")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
 
-  const handleDeleteForm = (formId: string) => {
-    setForms(prev => prev.filter(f => f.id !== formId));
-    toast.success("Form mapping deleted");
-  };
+  const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-lead`;
 
-  const handleUpdateMapping = (formId: string, mappingId: string, targetField: string) => {
-    setForms(prev =>
-      prev.map(f => {
-        if (f.id === formId) {
-          return {
-            ...f,
-            mappings: f.mappings.map(m =>
-              m.id === mappingId ? { ...m, targetField } : m
-            ),
-          };
-        }
-        return f;
-      })
-    );
-  };
+  const createWebhookKey = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase
+        .from("webhook_keys")
+        .insert({ user_id: user!.id, name: newFormName || "New Lead Form", is_active: true })
+        .select()
+        .single();
+      if (error) throw error;
 
-  const handleAddMapping = (formId: string) => {
-    if (!newSourceField.trim()) {
-      toast.error("Enter source field name");
-      return;
-    }
-    setForms(prev =>
-      prev.map(f => {
-        if (f.id === formId) {
-          return {
-            ...f,
-            mappings: [
-              ...f.mappings,
-              {
-                id: crypto.randomUUID(),
-                sourceField: newSourceField,
-                targetField: "notes",
-              },
-            ],
-          };
-        }
-        return f;
-      })
-    );
-    setNewSourceField("");
-    toast.success("Mapping added");
-  };
+      // Add default mappings
+      const defaultMappings = [
+        { user_id: user!.id, webhook_key_id: data.id, source_field: "name", target_field: "first_name" },
+        { user_id: user!.id, webhook_key_id: data.id, source_field: "email", target_field: "email" },
+        { user_id: user!.id, webhook_key_id: data.id, source_field: "phone", target_field: "phone" },
+      ];
+      await supabase.from("webhook_field_mappings").insert(defaultMappings);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["webhook-keys"] });
+      setAddFormOpen(false);
+      setNewFormName("");
+      toast.success("Webhook key created with default mappings");
+    },
+    onError: (e) => toast.error(e.message),
+  });
 
-  const handleDeleteMapping = (formId: string, mappingId: string) => {
-    setForms(prev =>
-      prev.map(f => {
-        if (f.id === formId) {
-          return {
-            ...f,
-            mappings: f.mappings.filter(m => m.id !== mappingId),
-          };
-        }
-        return f;
-      })
-    );
-  };
+  const toggleKey = useMutation({
+    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+      const { error } = await supabase.from("webhook_keys").update({ is_active }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["webhook-keys"] });
+      toast.success("Status updated");
+    },
+  });
 
-  const handleAddNewForm = () => {
-    const newForm: LeadForm = {
-      id: crypto.randomUUID(),
-      name: "New Lead Form",
-      platform: "pabbly",
-      mappings: [
-        { id: crypto.randomUUID(), sourceField: "name", targetField: "first_name" },
-        { id: crypto.randomUUID(), sourceField: "email", targetField: "email" },
-      ],
-      isActive: true,
-      leadsCount: 0,
-    };
-    setForms(prev => [...prev, newForm]);
-    setAddFormOpen(false);
-    toast.success("New form mapping created");
-  };
+  const deleteKey = useMutation({
+    mutationFn: async (id: string) => {
+      await supabase.from("webhook_field_mappings").delete().eq("webhook_key_id", id);
+      const { error } = await supabase.from("webhook_keys").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["webhook-keys"] });
+      toast.success("Form mapping deleted");
+    },
+  });
 
-  const getPlatformIcon = (platform: string) => {
-    switch (platform) {
-      case "facebook":
-        return <Facebook className="h-4 w-4 text-blue-500" />;
-      case "instagram":
-        return <Facebook className="h-4 w-4 text-pink-500" />;
-      default:
-        return <Settings2 className="h-4 w-4 text-muted-foreground" />;
-    }
+  const updateMapping = useMutation({
+    mutationFn: async ({ id, target_field }: { id: string; target_field: string }) => {
+      const { error } = await supabase.from("webhook_field_mappings").update({ target_field }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["webhook-keys"] }),
+  });
+
+  const addMapping = useMutation({
+    mutationFn: async ({ webhookKeyId, sourceField }: { webhookKeyId: string; sourceField: string }) => {
+      const { error } = await supabase.from("webhook_field_mappings").insert({
+        user_id: user!.id, webhook_key_id: webhookKeyId, source_field: sourceField, target_field: "notes",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["webhook-keys"] });
+      setNewSourceField("");
+      toast.success("Mapping added");
+    },
+  });
+
+  const deleteMapping = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("webhook_field_mappings").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["webhook-keys"] }),
+  });
+
+  const copyToClipboard = (text: string, keyId: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(keyId);
+    setTimeout(() => setCopiedKey(null), 2000);
+    toast.success("Copied to clipboard");
   };
 
   return (
@@ -182,53 +141,58 @@ export function LeadFormMapping() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium">Lead Form Mappings</h3>
-          <p className="text-xs text-muted-foreground">
-            Map incoming lead form fields to CRM contact fields
-          </p>
+          <p className="text-xs text-muted-foreground">Map incoming webhook fields to CRM contact fields</p>
         </div>
         <Button size="sm" onClick={() => setAddFormOpen(true)}>
-          <Plus className="h-4 w-4 mr-1" />
-          Add Form
+          <Plus className="h-4 w-4 mr-1" />Add Form
         </Button>
       </div>
 
-      {forms.length === 0 ? (
+      {/* Webhook URL info */}
+      <Card className="border-dashed">
+        <CardContent className="p-3">
+          <Label className="text-xs text-muted-foreground">Webhook URL</Label>
+          <div className="flex items-center gap-2 mt-1">
+            <code className="text-xs bg-muted px-2 py-1 rounded flex-1 truncate">{webhookUrl}</code>
+            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => copyToClipboard(webhookUrl, "url")}>
+              {copiedKey === "url" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">Send leads to this URL with your webhook key as <code className="text-xs">?key=YOUR_KEY</code></p>
+        </CardContent>
+      </Card>
+
+      {(!webhookKeys || webhookKeys.length === 0) ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-8">
             <AlertCircle className="h-10 w-10 text-muted-foreground/50 mb-3" />
             <p className="text-sm text-muted-foreground">No forms mapped yet</p>
             <Button variant="outline" size="sm" className="mt-3" onClick={() => setAddFormOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" />
-              Add Your First Form
+              <Plus className="h-4 w-4 mr-1" />Add Your First Form
             </Button>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
-          {forms.map((form) => (
-            <Card key={form.id}>
+          {webhookKeys.map((wk: any) => (
+            <Card key={wk.id}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    {getPlatformIcon(form.platform)}
+                    <Settings2 className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <CardTitle className="text-sm font-medium">{form.name}</CardTitle>
-                      <CardDescription className="text-xs">
-                        {form.pageName || "External webhook"} • {form.leadsCount} leads captured
-                      </CardDescription>
+                      <CardTitle className="text-sm font-medium">{wk.name}</CardTitle>
+                      <div className="flex items-center gap-2 mt-1">
+                        <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{wk.key}</code>
+                        <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => copyToClipboard(wk.key, wk.id)}>
+                          {copiedKey === wk.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Switch
-                      checked={form.isActive}
-                      onCheckedChange={() => handleToggleForm(form.id)}
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive"
-                      onClick={() => handleDeleteForm(form.id)}
-                    >
+                    <Switch checked={wk.is_active} onCheckedChange={(v) => toggleKey.mutate({ id: wk.id, is_active: v })} />
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteKey.mutate(wk.id)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -237,66 +201,28 @@ export function LeadFormMapping() {
               <CardContent className="pt-0">
                 <div className="space-y-2">
                   <div className="grid grid-cols-[1fr,32px,1fr,32px] items-center gap-2 text-xs text-muted-foreground font-medium px-1">
-                    <span>Source Field</span>
-                    <span></span>
-                    <span>CRM Field</span>
-                    <span></span>
+                    <span>Source Field</span><span /><span>CRM Field</span><span />
                   </div>
-                  
-                  {form.mappings.map((mapping) => (
-                    <div
-                      key={mapping.id}
-                      className="grid grid-cols-[1fr,32px,1fr,32px] items-center gap-2"
-                    >
-                      <div className="px-3 py-2 bg-muted rounded-md text-sm font-mono">
-                        {mapping.sourceField}
-                      </div>
+                  {wk.webhook_field_mappings?.map((m: any) => (
+                    <div key={m.id} className="grid grid-cols-[1fr,32px,1fr,32px] items-center gap-2">
+                      <div className="px-3 py-2 bg-muted rounded-md text-sm font-mono">{m.source_field}</div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground mx-auto" />
-                      <Select
-                        value={mapping.targetField}
-                        onValueChange={(value) =>
-                          handleUpdateMapping(form.id, mapping.id, value)
-                        }
-                      >
-                        <SelectTrigger className="h-9 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
+                      <Select value={m.target_field} onValueChange={(v) => updateMapping.mutate({ id: m.id, target_field: v })}>
+                        <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          {CRM_FIELDS.map((field) => (
-                            <SelectItem key={field.value} value={field.value}>
-                              {field.label}
-                            </SelectItem>
-                          ))}
+                          {CRM_FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
                         </SelectContent>
                       </Select>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => handleDeleteMapping(form.id, mapping.id)}
-                      >
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteMapping.mutate(m.id)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
                     </div>
                   ))}
-                  
-                  {/* Add new mapping */}
                   <div className="grid grid-cols-[1fr,32px,1fr,32px] items-center gap-2 pt-2">
-                    <Input
-                      placeholder="field_name"
-                      value={newSourceField}
-                      onChange={(e) => setNewSourceField(e.target.value)}
-                      className="h-9 text-sm font-mono"
-                    />
+                    <Input placeholder="field_name" value={newSourceField} onChange={(e) => setNewSourceField(e.target.value)} className="h-9 text-sm font-mono" />
                     <ArrowRight className="h-4 w-4 text-muted-foreground/30 mx-auto" />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-9"
-                      onClick={() => handleAddMapping(form.id)}
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Add Mapping
+                    <Button variant="outline" size="sm" className="h-9" onClick={() => { if (newSourceField.trim()) addMapping.mutate({ webhookKeyId: wk.id, sourceField: newSourceField }); }}>
+                      <Plus className="h-3 w-3 mr-1" />Add
                     </Button>
                     <div />
                   </div>
@@ -307,34 +233,16 @@ export function LeadFormMapping() {
         </div>
       )}
 
-      {/* Add Form Dialog */}
       <Dialog open={addFormOpen} onOpenChange={setAddFormOpen}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Lead Form Mapping</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Add Lead Form Mapping</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" className="h-20 flex-col gap-2" onClick={handleAddNewForm}>
-                <Facebook className="h-6 w-6 text-blue-500" />
-                <span className="text-xs">Facebook Form</span>
-              </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2" onClick={handleAddNewForm}>
-                <Facebook className="h-6 w-6 text-pink-500" />
-                <span className="text-xs">Instagram Form</span>
-              </Button>
+            <div className="space-y-2">
+              <Label>Form Name</Label>
+              <Input value={newFormName} onChange={(e) => setNewFormName(e.target.value)} placeholder="e.g. Webinar Registration" />
             </div>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or</span>
-              </div>
-            </div>
-            <Button variant="outline" className="w-full" onClick={handleAddNewForm}>
-              <Settings2 className="h-4 w-4 mr-2" />
-              External Webhook (Pabbly, Zapier, etc.)
+            <Button className="w-full" onClick={() => createWebhookKey.mutate()} disabled={createWebhookKey.isPending}>
+              <Plus className="h-4 w-4 mr-2" />Create Webhook Key
             </Button>
           </div>
         </DialogContent>

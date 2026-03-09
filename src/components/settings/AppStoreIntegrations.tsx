@@ -1,198 +1,146 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
-import { 
-  MessageCircle, 
-  Facebook, 
-  Instagram, 
-  Brain, 
-  Check, 
-  X, 
-  QrCode,
-  Key,
-  RefreshCw,
-  ExternalLink
+import {
+  MessageCircle, Facebook, Instagram, Brain, Check, X, QrCode, Key, RefreshCw, ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 
-interface Integration {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ElementType;
-  connected: boolean;
-  status?: string;
-}
+const INTEGRATIONS_META = [
+  { id: "whatsapp", name: "WhatsApp Web", description: "Connect WhatsApp to send/receive messages directly from CRM", icon: MessageCircle },
+  { id: "facebook", name: "Facebook Pages", description: "Connect Facebook Lead Forms to capture leads automatically", icon: Facebook },
+  { id: "instagram", name: "Instagram", description: "Connect Instagram DMs and lead forms", icon: Instagram },
+  { id: "openai", name: "AI Assistant", description: "AI-powered content generation and smart responses (built-in)", icon: Brain },
+];
 
 export function AppStoreIntegrations() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [whatsappOpen, setWhatsappOpen] = useState(false);
   const [facebookOpen, setFacebookOpen] = useState(false);
   const [instagramOpen, setInstagramOpen] = useState(false);
-  const [openaiOpen, setOpenaiOpen] = useState(false);
-  
   const [whatsappToken, setWhatsappToken] = useState("");
-  const [openaiKey, setOpenaiKey] = useState("");
-  
-  // Simulated connection states (would come from DB in production)
-  const [connections, setConnections] = useState({
-    whatsapp: false,
-    facebook: false,
-    instagram: false,
-    openai: false,
+
+  const { data: connections } = useQuery({
+    queryKey: ["integration-connections"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("integration_connections")
+        .select("*")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      const map: Record<string, { is_connected: boolean; config: any }> = {};
+      data.forEach((c: any) => { map[c.integration_id] = { is_connected: c.is_connected, config: c.config }; });
+      return map;
+    },
+    enabled: !!user,
   });
 
-  const integrations: Integration[] = [
-    {
-      id: "whatsapp",
-      name: "WhatsApp Web",
-      description: "Connect WhatsApp to send/receive messages directly from CRM",
-      icon: MessageCircle,
-      connected: connections.whatsapp,
-      status: connections.whatsapp ? "Connected" : undefined,
+  const upsertConnection = useMutation({
+    mutationFn: async ({ integrationId, connected, config }: { integrationId: string; connected: boolean; config?: any }) => {
+      const existing = connections?.[integrationId];
+      if (existing) {
+        const { error } = await supabase
+          .from("integration_connections")
+          .update({ is_connected: connected, config: config || {}, connected_at: connected ? new Date().toISOString() : null, updated_at: new Date().toISOString() })
+          .eq("user_id", user!.id)
+          .eq("integration_id", integrationId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("integration_connections")
+          .insert({ user_id: user!.id, integration_id: integrationId, is_connected: connected, config: config || {}, connected_at: connected ? new Date().toISOString() : null });
+        if (error) throw error;
+      }
     },
-    {
-      id: "facebook",
-      name: "Facebook Pages",
-      description: "Connect Facebook Lead Forms to capture leads automatically",
-      icon: Facebook,
-      connected: connections.facebook,
-      status: connections.facebook ? "2 forms mapped" : undefined,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["integration-connections"] });
     },
-    {
-      id: "instagram",
-      name: "Instagram",
-      description: "Connect Instagram DMs and lead forms",
-      icon: Instagram,
-      connected: connections.instagram,
-      status: connections.instagram ? "Connected" : undefined,
-    },
-    {
-      id: "openai",
-      name: "OpenAI / LLM",
-      description: "Enable AI-powered content generation and smart responses",
-      icon: Brain,
-      connected: connections.openai,
-      status: connections.openai ? "GPT-4 Active" : undefined,
-    },
-  ];
+  });
+
+  const isConnected = (id: string) => connections?.[id]?.is_connected || false;
 
   const handleConnect = (id: string) => {
-    switch (id) {
-      case "whatsapp":
-        setWhatsappOpen(true);
-        break;
-      case "facebook":
-        setFacebookOpen(true);
-        break;
-      case "instagram":
-        setInstagramOpen(true);
-        break;
-      case "openai":
-        setOpenaiOpen(true);
-        break;
+    if (id === "whatsapp") setWhatsappOpen(true);
+    else if (id === "facebook") setFacebookOpen(true);
+    else if (id === "instagram") setInstagramOpen(true);
+    else if (id === "openai") {
+      // AI is built-in via Lovable AI, just mark as connected
+      upsertConnection.mutate({ integrationId: "openai", connected: true, config: { provider: "lovable-ai" } });
+      toast.success("AI Assistant activated! Built-in AI features are now enabled.");
     }
   };
 
   const handleDisconnect = (id: string) => {
-    setConnections(prev => ({ ...prev, [id]: false }));
-    toast.success(`${id.charAt(0).toUpperCase() + id.slice(1)} disconnected`);
+    upsertConnection.mutate({ integrationId: id, connected: false });
+    toast.success("Disconnected successfully");
   };
 
   const connectWhatsApp = () => {
-    if (!whatsappToken.trim()) {
-      toast.error("Please enter your WhatsApp token");
-      return;
-    }
-    setConnections(prev => ({ ...prev, whatsapp: true }));
+    if (!whatsappToken.trim()) { toast.error("Please enter your WhatsApp token"); return; }
+    upsertConnection.mutate({ integrationId: "whatsapp", connected: true, config: { token: whatsappToken } });
     setWhatsappOpen(false);
     setWhatsappToken("");
-    toast.success("WhatsApp connected successfully!");
+    toast.success("WhatsApp connected!");
   };
 
   const connectFacebook = () => {
-    // In production, this would open OAuth flow
-    setConnections(prev => ({ ...prev, facebook: true }));
+    // Meta OAuth is not available in this platform - store as manual config
+    upsertConnection.mutate({ integrationId: "facebook", connected: true, config: { method: "webhook" } });
     setFacebookOpen(false);
-    toast.success("Facebook connected! Go to Lead Mapping to configure forms.");
+    toast.success("Facebook connected! Configure webhook in Lead Mapping tab.");
   };
 
   const connectInstagram = () => {
-    setConnections(prev => ({ ...prev, instagram: true }));
+    upsertConnection.mutate({ integrationId: "instagram", connected: true, config: { method: "webhook" } });
     setInstagramOpen(false);
-    toast.success("Instagram connected successfully!");
-  };
-
-  const connectOpenAI = () => {
-    if (!openaiKey.trim()) {
-      toast.error("Please enter your OpenAI API key");
-      return;
-    }
-    setConnections(prev => ({ ...prev, openai: true }));
-    setOpenaiOpen(false);
-    setOpenaiKey("");
-    toast.success("OpenAI connected! AI features are now active.");
+    toast.success("Instagram connected!");
   };
 
   return (
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-2">
-        {integrations.map((integration) => {
+        {INTEGRATIONS_META.map((integration) => {
           const Icon = integration.icon;
+          const connected = isConnected(integration.id);
           return (
             <Card key={integration.id} className="relative overflow-hidden">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${integration.connected ? 'bg-primary/10' : 'bg-muted'}`}>
-                      <Icon className={`h-5 w-5 ${integration.connected ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <div className={`p-2 rounded-lg ${connected ? 'bg-primary/10' : 'bg-muted'}`}>
+                      <Icon className={`h-5 w-5 ${connected ? 'text-primary' : 'text-muted-foreground'}`} />
                     </div>
                     <div>
                       <CardTitle className="text-sm font-medium">{integration.name}</CardTitle>
-                      {integration.connected && integration.status && (
+                      {connected && (
                         <Badge variant="secondary" className="text-xs mt-1">
                           <Check className="h-3 w-3 mr-1" />
-                          {integration.status}
+                          Connected
                         </Badge>
                       )}
                     </div>
                   </div>
-                  {integration.connected && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs text-destructive hover:text-destructive"
-                      onClick={() => handleDisconnect(integration.id)}
-                    >
-                      <X className="h-3 w-3 mr-1" />
-                      Disconnect
+                  {connected && (
+                    <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive" onClick={() => handleDisconnect(integration.id)}>
+                      <X className="h-3 w-3 mr-1" /> Disconnect
                     </Button>
                   )}
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
-                <p className="text-xs text-muted-foreground mb-3">
-                  {integration.description}
-                </p>
-                {!integration.connected && (
-                  <Button
-                    size="sm"
-                    className="w-full"
-                    onClick={() => handleConnect(integration.id)}
-                  >
-                    Connect
-                  </Button>
+                <p className="text-xs text-muted-foreground mb-3">{integration.description}</p>
+                {!connected && (
+                  <Button size="sm" className="w-full" onClick={() => handleConnect(integration.id)}>Connect</Button>
                 )}
               </CardContent>
             </Card>
@@ -200,187 +148,80 @@ export function AppStoreIntegrations() {
         })}
       </div>
 
-      {/* WhatsApp Connection Dialog */}
+      {/* WhatsApp Dialog */}
       <Dialog open={whatsappOpen} onOpenChange={setWhatsappOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
-              Connect WhatsApp
-            </DialogTitle>
-            <DialogDescription>
-              Scan QR code with your phone or enter API token
-            </DialogDescription>
+            <DialogTitle className="flex items-center gap-2"><MessageCircle className="h-5 w-5" />Connect WhatsApp</DialogTitle>
+            <DialogDescription>Scan QR code or enter API token</DialogDescription>
           </DialogHeader>
-          
           <div className="space-y-4">
-            {/* QR Code Placeholder */}
             <div className="border border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center bg-muted/30">
               <QrCode className="h-24 w-24 text-muted-foreground/50 mb-3" />
-              <p className="text-sm text-muted-foreground text-center">
-                QR Code scanning requires external WhatsApp API service
-              </p>
-              <Button variant="outline" size="sm" className="mt-2">
-                <RefreshCw className="h-3 w-3 mr-1" />
-                Generate QR Code
-              </Button>
+              <p className="text-sm text-muted-foreground text-center">Use the WhatsApp tab in Settings for QR scanning</p>
             </div>
-            
             <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or use token</span>
-              </div>
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+              <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Or use token</span></div>
             </div>
-            
             <div className="space-y-2">
-              <Label htmlFor="whatsapp-token">WhatsApp Business API Token</Label>
-              <Input
-                id="whatsapp-token"
-                type="password"
-                placeholder="Enter your WhatsApp token..."
-                value={whatsappToken}
-                onChange={(e) => setWhatsappToken(e.target.value)}
-              />
+              <Label htmlFor="wa-token">WhatsApp Business API Token</Label>
+              <Input id="wa-token" type="password" placeholder="Enter your WhatsApp token..." value={whatsappToken} onChange={(e) => setWhatsappToken(e.target.value)} />
               <p className="text-xs text-muted-foreground">
-                Get your token from{" "}
-                <a href="https://developers.facebook.com/docs/whatsapp" target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                  Meta for Developers <ExternalLink className="h-3 w-3 inline" />
-                </a>
+                Get your token from <a href="https://developers.facebook.com/docs/whatsapp" target="_blank" rel="noreferrer" className="text-primary hover:underline">Meta for Developers <ExternalLink className="h-3 w-3 inline" /></a>
               </p>
             </div>
           </div>
-          
           <DialogFooter>
-            <Button variant="outline" onClick={() => setWhatsappOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={connectWhatsApp}>
-              Connect
-            </Button>
+            <Button variant="outline" onClick={() => setWhatsappOpen(false)}>Cancel</Button>
+            <Button onClick={connectWhatsApp}>Connect</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Facebook Connection Dialog */}
+      {/* Facebook Dialog */}
       <Dialog open={facebookOpen} onOpenChange={setFacebookOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Facebook className="h-5 w-5" />
-              Connect Facebook
-            </DialogTitle>
-            <DialogDescription>
-              Connect your Facebook Pages to capture leads automatically
-            </DialogDescription>
+            <DialogTitle className="flex items-center gap-2"><Facebook className="h-5 w-5" />Connect Facebook</DialogTitle>
+            <DialogDescription>Connect via webhook to capture leads automatically</DialogDescription>
           </DialogHeader>
-          
           <div className="space-y-4">
             <div className="border border-border rounded-lg p-4 bg-muted/30">
-              <h4 className="text-sm font-medium mb-2">Permissions Required:</h4>
+              <h4 className="text-sm font-medium mb-2">How it works:</h4>
               <ul className="text-xs text-muted-foreground space-y-1">
-                <li>• pages_show_list - View your Pages</li>
-                <li>• pages_read_engagement - Read Page engagement</li>
-                <li>• leads_retrieval - Access lead form data</li>
-                <li>• pages_manage_metadata - Manage Page settings</li>
+                <li>1. Set up a webhook in your Meta developer account</li>
+                <li>2. Point it to your CRM webhook URL (see Lead Mapping tab)</li>
+                <li>3. Map lead form fields to CRM fields</li>
               </ul>
             </div>
-            
             <Button className="w-full" onClick={connectFacebook}>
-              <Facebook className="h-4 w-4 mr-2" />
-              Continue with Facebook
+              <Facebook className="h-4 w-4 mr-2" />Mark as Connected
             </Button>
-            
-            <p className="text-xs text-muted-foreground text-center">
-              You'll be redirected to Facebook to authorize access
-            </p>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Instagram Connection Dialog */}
+      {/* Instagram Dialog */}
       <Dialog open={instagramOpen} onOpenChange={setInstagramOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Instagram className="h-5 w-5" />
-              Connect Instagram
-            </DialogTitle>
-            <DialogDescription>
-              Connect Instagram to manage DMs and lead forms
-            </DialogDescription>
+            <DialogTitle className="flex items-center gap-2"><Instagram className="h-5 w-5" />Connect Instagram</DialogTitle>
+            <DialogDescription>Connect Instagram via Facebook Page integration</DialogDescription>
           </DialogHeader>
-          
           <div className="space-y-4">
             <div className="border border-border rounded-lg p-4 bg-muted/30">
               <h4 className="text-sm font-medium mb-2">Requirements:</h4>
               <ul className="text-xs text-muted-foreground space-y-1">
                 <li>• Instagram Business or Creator account</li>
                 <li>• Connected to a Facebook Page</li>
+                <li>• Configure webhook in Lead Mapping</li>
               </ul>
             </div>
-            
             <Button className="w-full" onClick={connectInstagram}>
-              <Instagram className="h-4 w-4 mr-2" />
-              Continue with Instagram
+              <Instagram className="h-4 w-4 mr-2" />Mark as Connected
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* OpenAI Connection Dialog */}
-      <Dialog open={openaiOpen} onOpenChange={setOpenaiOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5" />
-              Connect OpenAI
-            </DialogTitle>
-            <DialogDescription>
-              Enable AI-powered features with your OpenAI API key
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="openai-key">OpenAI API Key</Label>
-              <Input
-                id="openai-key"
-                type="password"
-                placeholder="sk-..."
-                value={openaiKey}
-                onChange={(e) => setOpenaiKey(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Get your API key from{" "}
-                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                  OpenAI Platform <ExternalLink className="h-3 w-3 inline" />
-                </a>
-              </p>
-            </div>
-            
-            <div className="border border-border rounded-lg p-4 bg-muted/30">
-              <h4 className="text-sm font-medium mb-2">Features Enabled:</h4>
-              <ul className="text-xs text-muted-foreground space-y-1">
-                <li>• AI content generation for landing pages</li>
-                <li>• Smart message suggestions</li>
-                <li>• Automated lead scoring</li>
-                <li>• Content Lab AI writer</li>
-              </ul>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpenaiOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={connectOpenAI}>
-              <Key className="h-4 w-4 mr-2" />
-              Save API Key
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
