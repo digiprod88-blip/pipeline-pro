@@ -185,10 +185,41 @@ export default function Pipeline() {
         })
         .eq("id", contactId);
       if (error) throw error;
+
+      // Log activity for stage change
+      await supabase.from("activities").insert({
+        user_id: user!.id,
+        contact_id: contactId,
+        type: "stage_change",
+        description: `Moved to stage "${stage?.name}"`,
+        metadata: { stage_id: stageId, stage_name: stage?.name },
+      });
+
+      // Trigger workflows with stage_change trigger
+      const { data: workflows } = await supabase
+        .from("workflows")
+        .select("id, trigger_type, trigger_config")
+        .eq("user_id", user!.id)
+        .eq("is_active", true)
+        .in("trigger_type", ["stage_change"]);
+
+      if (workflows && workflows.length > 0) {
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        for (const wf of workflows) {
+          // If trigger_config has a specific stage_id, only trigger for that stage
+          const cfg = wf.trigger_config as any;
+          if (cfg?.stage_id && cfg.stage_id !== stageId) continue;
+          
+          supabase.functions.invoke("workflow-executor", {
+            body: { workflow_id: wf.id, contact_id: contactId, trigger_type: "stage_change" },
+          }).catch(console.error);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["pipeline-contacts"] });
       queryClient.invalidateQueries({ queryKey: ["contacts-stats"] });
+      toast.success("Stage updated");
     },
   });
 

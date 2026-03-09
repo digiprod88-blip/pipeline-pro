@@ -6,6 +6,28 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Resolve a nested path like "data.user.name" from an object
+function resolveNestedPath(obj: any, path: string): any {
+  return path.split(".").reduce((current, key) => current?.[key], obj);
+}
+
+// Apply a simple transform to a value
+function applyTransform(value: any, transform: string | null): any {
+  if (!value || !transform) return value;
+  switch (transform) {
+    case "lowercase": return String(value).toLowerCase();
+    case "uppercase": return String(value).toUpperCase();
+    case "trim": return String(value).trim();
+    case "number": return parseFloat(value) || 0;
+    case "first_word": return String(value).split(" ")[0] || value;
+    case "last_word": {
+      const parts = String(value).split(" ");
+      return parts[parts.length - 1] || value;
+    }
+    default: return value;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -54,6 +76,12 @@ serve(async (req) => {
 
     const body = await req.json();
 
+    // ── Fetch custom field mappings for this webhook ──
+    const { data: fieldMappings } = await supabase
+      .from("webhook_field_mappings")
+      .select("*")
+      .eq("webhook_key_id", webhook.id);
+
     // ── Omni-channel: detect inbound messages from WhatsApp/Messenger webhooks ──
     const isWhatsAppInbound = body.entry?.[0]?.changes?.[0]?.value?.messages;
     const isMessengerInbound = body.entry?.[0]?.messaging;
@@ -66,7 +94,32 @@ serve(async (req) => {
     let source = body.source;
     let company = body.company;
     let value = body.value;
+    let tags: string[] = [];
     let inboundMessage = "";
+
+    // Apply custom field mappings (supports nested JSON paths)
+    if (fieldMappings && fieldMappings.length > 0) {
+      for (const mapping of fieldMappings) {
+        const rawValue = resolveNestedPath(body, mapping.source_field);
+        if (rawValue === undefined || rawValue === null) continue;
+        const transformed = applyTransform(rawValue, mapping.transform);
+
+        switch (mapping.target_field) {
+          case "first_name": first_name = transformed; break;
+          case "last_name": last_name = transformed; break;
+          case "name": name = transformed; break;
+          case "email": email = transformed; break;
+          case "phone": phone = transformed; break;
+          case "source": source = transformed; break;
+          case "company": company = transformed; break;
+          case "value": value = transformed; break;
+          case "tags":
+            if (Array.isArray(transformed)) tags = transformed;
+            else tags = [String(transformed)];
+            break;
+        }
+      }
+    }
 
     if (isWhatsAppInbound) {
       const msg = body.entry[0].changes[0].value.messages[0];
@@ -112,12 +165,29 @@ serve(async (req) => {
         value: value ? parseFloat(value) : 0,
         pipeline_id: webhook.pipeline_id,
         stage_id: stageId,
+        tags: tags.length > 0 ? tags : null,
       })
       .select()
       .single();
 
     if (contactError) {
       throw new Error(`Failed to create contact: ${contactError.message}`);
+    }
+
+    // ── Auto-add to contact groups based on source ──
+    if (source) {
+      const { data: groups } = await supabase
+        .from("contact_groups")
+        .select("id, name")
+        .ilike("name", `%${source}%`);
+
+      if (groups && groups.length > 0) {
+        const memberships = groups.map(g => ({
+          contact_id: contact.id,
+          group_id: g.id,
+        }));
+        await supabase.from("contact_group_members").insert(memberships).throwOnError();
+      }
     }
 
     // Log activity
@@ -150,7 +220,7 @@ serve(async (req) => {
       link: `/contacts/${contact.id}`,
     });
 
-    // ── Trigger active workflows with "new_lead" or "webhook" trigger ──
+    // ── Trigger active workflows ──
     const { data: workflows } = await supabase
       .from("workflows")
       .select("id, trigger_type")
@@ -159,7 +229,6 @@ serve(async (req) => {
       .in("trigger_type", ["new_lead", "webhook"]);
 
     if (workflows && workflows.length > 0) {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL");
       for (const wf of workflows) {
         try {
           await fetch(`${supabaseUrl}/functions/v1/workflow-executor`, {
