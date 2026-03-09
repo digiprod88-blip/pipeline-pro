@@ -21,6 +21,7 @@ import { ShopSettings } from "@/components/shop/ShopSettings";
 
 export default function Shop() {
   const { user } = useAuth();
+  const { canViewFinance } = useStaffPermissions();
   const queryClient = useQueryClient();
   const [openProduct, setOpenProduct] = useState(false);
 
