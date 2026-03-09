@@ -223,7 +223,20 @@ export default function CalendarPage() {
                   <div><Label>End</Label><Input type="datetime-local" value={apptForm.end_time} onChange={e => setApptForm({ ...apptForm, end_time: e.target.value })} /></div>
                 </div>
                 <div><Label>Location</Label><Input value={apptForm.location} onChange={e => setApptForm({ ...apptForm, location: e.target.value })} placeholder="Office / Zoom link" /></div>
-                <Button className="w-full" onClick={() => createAppointment.mutate()} disabled={!apptForm.title || !apptForm.start_time || !apptForm.end_time}>Create</Button>
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <Label className="flex items-center gap-2"><Video className="h-4 w-4" />Create Zoom Meeting</Label>
+                    <p className="text-xs text-muted-foreground">Auto-generate a Zoom link for this appointment</p>
+                  </div>
+                  <Switch checked={apptForm.createZoom} onCheckedChange={(v) => setApptForm({ ...apptForm, createZoom: v })} />
+                </div>
+                <Button className="w-full" onClick={() => createAppointment.mutate()} disabled={!apptForm.title || !apptForm.start_time || !apptForm.end_time || createAppointment.isPending || isCreatingZoom}>
+                  {isCreatingZoom ? (
+                    <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Creating Zoom...</>
+                  ) : (
+                    "Create"
+                  )}
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
