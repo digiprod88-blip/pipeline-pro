@@ -15,6 +15,7 @@ import { LeadFormMapping } from "@/components/settings/LeadFormMapping";
 import { DynamicVariables } from "@/components/settings/DynamicVariables";
 import { WhatsAppQRConnection } from "@/components/settings/WhatsAppQRConnection";
 import { MetaPixelSettings } from "@/components/settings/MetaPixelSettings";
+import { WebhooksSettings } from "@/components/settings/WebhooksSettings";
 
 function DnsTestButton() {
   const [domain, setDomain] = useState("");
