@@ -16,24 +16,26 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  ArrowLeft, Save, Plus, Type, Image, Star, MessageSquare, Layout, Zap,
+  ArrowLeft, Save, Plus, Type, Image, Star, MessageSquare, Layout, Zap, FormInput, Settings2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { SortableBlock } from "./SortableBlock";
+import { BlockAdvancedSettingsPanel, type BlockAdvancedSettings } from "./BlockAdvancedSettings";
 
-export type BlockType = "hero" | "features" | "cta" | "testimonials" | "text" | "image";
+export type BlockType = "hero" | "features" | "cta" | "testimonials" | "text" | "image" | "popup_form";
 
 export interface PageBlock {
   id: string;
   type: BlockType;
   content: Record<string, string>;
+  advanced?: BlockAdvancedSettings;
 }
 
 const BLOCK_TEMPLATES: { type: BlockType; label: string; icon: React.ElementType; defaults: Record<string, string> }[] = [
@@ -43,6 +45,7 @@ const BLOCK_TEMPLATES: { type: BlockType; label: string; icon: React.ElementType
   { type: "testimonials", label: "Testimonials", icon: MessageSquare, defaults: { title: "What our customers say", name1: "John Doe", quote1: "This product changed everything!", name2: "Jane Smith", quote2: "Absolutely love it!" } },
   { type: "text", label: "Text Block", icon: Type, defaults: { heading: "Section Title", body: "Write your content here..." } },
   { type: "image", label: "Image + Text", icon: Image, defaults: { heading: "Visual Section", body: "Describe your image content", imageUrl: "" } },
+  { type: "popup_form", label: "Popup Form", icon: FormInput, defaults: { formTitle: "Get Started", nameLabel: "Your Name", emailLabel: "Your Email", buttonText: "Submit" } },
 ];
 
 interface PageBuilderProps {
