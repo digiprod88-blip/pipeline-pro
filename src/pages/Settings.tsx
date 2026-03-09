@@ -230,6 +230,10 @@ export default function Settings() {
         <TabsContent value="whatsapp" className="mt-6">
           <WhatsAppQRConnection />
         </TabsContent>
+
+        <TabsContent value="pixel" className="mt-6">
+          <MetaPixelSettings />
+        </TabsContent>
       </Tabs>
     </div>
   );

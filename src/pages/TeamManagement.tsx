@@ -247,7 +247,7 @@ export default function TeamManagement() {
               })}
               {(!members || members.length === 0) && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                     No team members found.
                   </TableCell>
                 </TableRow>
