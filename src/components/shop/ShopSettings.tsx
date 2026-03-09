@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Store, CreditCard, IndianRupee, DollarSign, Check, AlertCircle } from "lucide-react";
+import { Store, CreditCard, IndianRupee, DollarSign, Check, AlertCircle, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 export function ShopSettings() {
@@ -20,11 +20,7 @@ export function ShopSettings() {
   const { data: settings, isLoading } = useQuery({
     queryKey: ["shop-settings"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("shop_settings")
-        .select("*")
-        .eq("user_id", user!.id)
-        .maybeSingle();
+      const { data, error } = await supabase.from("shop_settings").select("*").eq("user_id", user!.id).maybeSingle();
       if (error) throw error;
       return data;
     },
@@ -37,19 +33,15 @@ export function ShopSettings() {
     gst_number: "", terms_text: "",
   });
 
-  // Sync form when settings load
   useEffect(() => {
     if (settings) {
       setForm({
-        shop_name: settings.shop_name || "",
-        logo_url: settings.logo_url || "",
-        banner_url: settings.banner_url || "",
-        currency: settings.currency || "INR",
+        shop_name: settings.shop_name || "", logo_url: settings.logo_url || "",
+        banner_url: settings.banner_url || "", currency: settings.currency || "INR",
         payment_gateway: settings.payment_gateway || "none",
         razorpay_key_id: settings.razorpay_key_id || "",
         stripe_publishable_key: settings.stripe_publishable_key || "",
-        gst_number: settings.gst_number || "",
-        terms_text: settings.terms_text || "",
+        gst_number: settings.gst_number || "", terms_text: settings.terms_text || "",
       });
     }
   }, [settings]);
@@ -74,16 +66,27 @@ export function ShopSettings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["shop-settings"] });
-      toast.success("Shop settings saved!");
+      toast.success("Shop settings saved & published!");
     },
     onError: (e) => toast.error(e.message),
   });
 
+  const shopUrl = `${window.location.origin}/shop`;
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Store className="h-5 w-5" />Shop Settings</CardTitle>
-        <CardDescription>Configure your shop branding and payment gateways</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2"><Store className="h-5 w-5" />Shop Settings</CardTitle>
+            <CardDescription>Configure your shop branding and payment gateways</CardDescription>
+          </div>
+          {settings?.shop_name && (
+            <Badge variant="success" className="text-xs flex items-center gap-1">
+              <Check className="h-3 w-3" />Live
+            </Badge>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="branding" className="space-y-4">
@@ -96,7 +99,7 @@ export function ShopSettings() {
           <TabsContent value="branding" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Shop Name</Label>
+                <Label>Shop Name *</Label>
                 <Input value={form.shop_name} onChange={(e) => setForm({ ...form, shop_name: e.target.value })} placeholder="My Awesome Shop" />
               </div>
               <div className="space-y-2">
@@ -137,7 +140,6 @@ export function ShopSettings() {
                 </SelectContent>
               </Select>
             </div>
-
             <Card className="border-dashed">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center justify-between">
@@ -150,10 +152,8 @@ export function ShopSettings() {
                   <Label className="text-xs">Key ID (Publishable)</Label>
                   <Input value={form.razorpay_key_id} onChange={(e) => setForm({ ...form, razorpay_key_id: e.target.value })} placeholder="rzp_live_..." className="text-sm" />
                 </div>
-                <p className="text-xs text-muted-foreground">Get keys from <a href="https://dashboard.razorpay.com/app/keys" target="_blank" rel="noreferrer" className="text-primary underline">Razorpay Dashboard</a></p>
               </CardContent>
             </Card>
-
             <Card className="border-dashed">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center justify-between">
@@ -166,10 +166,8 @@ export function ShopSettings() {
                   <Label className="text-xs">Publishable Key</Label>
                   <Input value={form.stripe_publishable_key} onChange={(e) => setForm({ ...form, stripe_publishable_key: e.target.value })} placeholder="pk_live_..." className="text-sm" />
                 </div>
-                <p className="text-xs text-muted-foreground">Get keys from <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noreferrer" className="text-primary underline">Stripe Dashboard</a></p>
               </CardContent>
             </Card>
-
             <div className="flex items-center gap-2 p-3 bg-warning/10 rounded-lg text-sm">
               <AlertCircle className="h-4 w-4 text-warning" />
               <span>Secret keys should be added via backend settings for security.</span>
@@ -188,10 +186,26 @@ export function ShopSettings() {
           </TabsContent>
         </Tabs>
 
-        <div className="mt-6 flex justify-end">
-          <Button onClick={() => saveSettings.mutate()} disabled={saveSettings.isPending}>
-            {saveSettings.isPending ? "Saving..." : "Save Settings"}
-          </Button>
+        {/* Publish bar */}
+        <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+          <div className="flex items-center gap-3">
+            {settings?.shop_name ? (
+              <Badge variant="success" className="text-xs flex items-center gap-1"><Check className="h-3 w-3" />Published</Badge>
+            ) : (
+              <Badge variant="secondary" className="text-xs">Not Published</Badge>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Shop URL: <span className="font-mono text-foreground">{shopUrl}</span>
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => window.open("/shop", "_blank")} disabled={!settings?.shop_name}>
+              <ExternalLink className="h-3.5 w-3.5 mr-1" />Preview
+            </Button>
+            <Button onClick={() => saveSettings.mutate()} disabled={saveSettings.isPending || !form.shop_name}>
+              {saveSettings.isPending ? "Saving..." : "Save & Publish"}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

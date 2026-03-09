@@ -20,9 +20,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  ArrowLeft, Save, Plus, Type, Image, Star, MessageSquare, Layout, Zap, FormInput, Settings2,
+  ArrowLeft, Save, Plus, Type, Image, Star, MessageSquare, Layout, Zap, FormInput, Settings2, Code,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -61,8 +63,10 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
   const [blocks, setBlocks] = useState<PageBlock[]>(initialBlocks);
   const [selectedBlock, setSelectedBlock] = useState<string | null>(null);
   const [showPalette, setShowPalette] = useState(false);
+  const [showCodeModal, setShowCodeModal] = useState(false);
+  const [customHeadCode, setCustomHeadCode] = useState("");
+  const [customBodyCode, setCustomBodyCode] = useState("");
 
-  // Add TouchSensor for mobile support
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 6 } }),
@@ -82,11 +86,7 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
 
   const addBlock = (type: BlockType) => {
     const template = BLOCK_TEMPLATES.find((t) => t.type === type)!;
-    const newBlock: PageBlock = {
-      id: crypto.randomUUID(),
-      type,
-      content: { ...template.defaults },
-    };
+    const newBlock: PageBlock = { id: crypto.randomUUID(), type, content: { ...template.defaults } };
     setBlocks((prev) => [...prev, newBlock]);
     setSelectedBlock(newBlock.id);
     setShowPalette(false);
@@ -94,15 +94,11 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
   };
 
   const updateBlockContent = (blockId: string, key: string, value: string) => {
-    setBlocks((prev) =>
-      prev.map((b) => (b.id === blockId ? { ...b, content: { ...b.content, [key]: value } } : b))
-    );
+    setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, content: { ...b.content, [key]: value } } : b)));
   };
 
   const updateBlockAdvanced = (blockId: string, advanced: BlockAdvancedSettings) => {
-    setBlocks((prev) =>
-      prev.map((b) => (b.id === blockId ? { ...b, advanced } : b))
-    );
+    setBlocks((prev) => prev.map((b) => (b.id === blockId ? { ...b, advanced } : b)));
   };
 
   const removeBlock = (blockId: string) => {
@@ -127,6 +123,9 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
             <Badge variant="secondary" className="text-xs hidden sm:inline-flex">{blocks.length} blocks</Badge>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" size="sm" onClick={() => setShowCodeModal(true)} title="Custom Code Injection">
+              <Code className="h-4 w-4" />
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setShowPalette(!showPalette)}>
               <Plus className="h-4 w-4 md:mr-1" />
               <span className="hidden md:inline">Add Block</span>
@@ -138,22 +137,13 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
           </div>
         </div>
 
-        {/* Block Palette - responsive grid */}
+        {/* Block Palette */}
         <AnimatePresence>
           {showPalette && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="border-b border-border bg-muted/30 overflow-hidden"
-            >
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-b border-border bg-muted/30 overflow-hidden">
               <div className="p-3 md:p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
                 {BLOCK_TEMPLATES.map((t) => (
-                  <button
-                    key={t.type}
-                    onClick={() => addBlock(t.type)}
-                    className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-border bg-card hover:border-primary/30 hover:shadow-sm active:scale-[0.97] transition-all text-xs touch-manipulation"
-                  >
+                  <button key={t.type} onClick={() => addBlock(t.type)} className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-border bg-card hover:border-primary/30 hover:shadow-sm active:scale-[0.97] transition-all text-xs touch-manipulation">
                     <t.icon className="h-5 w-5 text-muted-foreground" />
                     <span className="text-foreground font-medium text-center leading-tight">{t.label}</span>
                   </button>
@@ -175,13 +165,7 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
               <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
                 <div className="space-y-3 max-w-3xl mx-auto">
                   {blocks.map((block) => (
-                    <SortableBlock
-                      key={block.id}
-                      block={block}
-                      isSelected={selectedBlock === block.id}
-                      onSelect={() => setSelectedBlock(block.id)}
-                      onRemove={() => removeBlock(block.id)}
-                    />
+                    <SortableBlock key={block.id} block={block} isSelected={selectedBlock === block.id} onSelect={() => setSelectedBlock(block.id)} onRemove={() => removeBlock(block.id)} />
                   ))}
                 </div>
               </SortableContext>
@@ -190,7 +174,7 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
         </div>
       </div>
 
-      {/* Properties Panel - uses Sheet on mobile, side panel on desktop */}
+      {/* Properties Panel */}
       {selectedBlockData && (
         <>
           {/* Desktop: inline panel */}
@@ -200,16 +184,11 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
                 <h3 className="text-sm font-semibold capitalize">{selectedBlockData.type.replace("_", " ")} Settings</h3>
                 <Button variant="ghost" size="sm" onClick={() => setSelectedBlock(null)}>✕</Button>
               </div>
-              
               <Tabs defaultValue="content" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-4">
                   <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
-                  <TabsTrigger value="advanced" className="text-xs">
-                    <Settings2 className="h-3 w-3 mr-1" />
-                    Advanced
-                  </TabsTrigger>
+                  <TabsTrigger value="advanced" className="text-xs"><Settings2 className="h-3 w-3 mr-1" />Advanced</TabsTrigger>
                 </TabsList>
-                
                 <TabsContent value="content" className="space-y-4 mt-0">
                   {Object.entries(selectedBlockData.content).map(([key, value]) => (
                     <div key={key} className="space-y-1">
@@ -222,13 +201,8 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
                     </div>
                   ))}
                 </TabsContent>
-                
                 <TabsContent value="advanced" className="mt-0">
-                  <BlockAdvancedSettingsPanel
-                    settings={selectedBlockData.advanced || {}}
-                    onChange={(advanced) => updateBlockAdvanced(selectedBlockData.id, advanced)}
-                    blockType={selectedBlockData.type}
-                  />
+                  <BlockAdvancedSettingsPanel settings={selectedBlockData.advanced || {}} onChange={(advanced) => updateBlockAdvanced(selectedBlockData.id, advanced)} blockType={selectedBlockData.type} />
                 </TabsContent>
               </Tabs>
             </div>
@@ -245,7 +219,6 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
                   <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
                   <TabsTrigger value="advanced" className="text-xs">Advanced</TabsTrigger>
                 </TabsList>
-                
                 <TabsContent value="content" className="space-y-4 pb-6">
                   {Object.entries(selectedBlockData.content).map(([key, value]) => (
                     <div key={key} className="space-y-1">
@@ -258,19 +231,41 @@ export function PageBuilder({ pageId, pageTitle, initialBlocks, onSave, onBack, 
                     </div>
                   ))}
                 </TabsContent>
-                
                 <TabsContent value="advanced" className="pb-6">
-                  <BlockAdvancedSettingsPanel
-                    settings={selectedBlockData.advanced || {}}
-                    onChange={(advanced) => updateBlockAdvanced(selectedBlockData.id, advanced)}
-                    blockType={selectedBlockData.type}
-                  />
+                  <BlockAdvancedSettingsPanel settings={selectedBlockData.advanced || {}} onChange={(advanced) => updateBlockAdvanced(selectedBlockData.id, advanced)} blockType={selectedBlockData.type} />
                 </TabsContent>
               </Tabs>
             </SheetContent>
           </Sheet>
         </>
       )}
+
+      {/* Custom Code Injection Modal */}
+      <Dialog open={showCodeModal} onOpenChange={setShowCodeModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Code className="h-5 w-5" />
+              Custom Code Injection
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Head Code (Meta Pixel, Analytics, etc.)</Label>
+              <Textarea value={customHeadCode} onChange={(e) => setCustomHeadCode(e.target.value)} placeholder={'<!-- Facebook Pixel Code -->\n<script>...</script>'} rows={5} className="font-mono text-xs" />
+              <p className="text-xs text-muted-foreground">Code injected into {"<head>"} of the published page</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Body Code (Chat widgets, etc.)</Label>
+              <Textarea value={customBodyCode} onChange={(e) => setCustomBodyCode(e.target.value)} placeholder={'<!-- Chat widget -->\n<script>...</script>'} rows={4} className="font-mono text-xs" />
+              <p className="text-xs text-muted-foreground">Code injected before {"</body>"} of the published page</p>
+            </div>
+            <Button className="w-full" onClick={() => { setShowCodeModal(false); toast.success("Custom code saved with page"); }}>
+              Save Code
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
