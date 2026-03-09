@@ -27,6 +27,7 @@ import SocialScheduler from "./pages/SocialScheduler";
 import AuditLogs from "./pages/AuditLogs";
 import ClientPortal from "./pages/portal/ClientPortal";
 import BookingPage from "./pages/BookingPage";
+import PublicLandingPage from "./pages/PublicLandingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
