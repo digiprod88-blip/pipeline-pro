@@ -15,6 +15,8 @@ import { Plus, Globe, Eye, Users, Pencil, Trash2, Copy, Sparkles, PanelRightOpen
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { AiAssistantSidebar } from "@/components/sites/AiAssistantSidebar";
+import { NestedPageBuilder } from "@/components/sites/NestedPageBuilder";
+import type { PageSection } from "@/components/sites/types";
 import { PageBuilder, type PageBlock } from "@/components/sites/PageBuilder";
 
 export default function Sites() {
