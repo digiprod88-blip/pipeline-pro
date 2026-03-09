@@ -106,7 +106,7 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="general" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="general" className="gap-1.5">
             <Settings2 className="h-4 w-4" />
             <span className="hidden sm:inline">General</span>
@@ -118,6 +118,14 @@ export default function Settings() {
           <TabsTrigger value="leadmapping" className="gap-1.5">
             <Map className="h-4 w-4" />
             <span className="hidden sm:inline">Lead Mapping</span>
+          </TabsTrigger>
+          <TabsTrigger value="variables" className="gap-1.5">
+            <Variable className="h-4 w-4" />
+            <span className="hidden sm:inline">Variables</span>
+          </TabsTrigger>
+          <TabsTrigger value="whatsapp" className="gap-1.5">
+            <MessageCircle className="h-4 w-4" />
+            <span className="hidden sm:inline">WhatsApp</span>
           </TabsTrigger>
         </TabsList>
 
