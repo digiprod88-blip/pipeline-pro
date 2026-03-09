@@ -389,6 +389,10 @@ export default function Settings() {
         <TabsContent value="pixel" className="mt-6">
           <MetaPixelSettings />
         </TabsContent>
+
+        <TabsContent value="webhooks" className="mt-6">
+          <WebhooksSettings />
+        </TabsContent>
       </Tabs>
     </div>
   );
