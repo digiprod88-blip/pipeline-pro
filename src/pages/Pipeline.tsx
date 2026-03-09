@@ -39,7 +39,7 @@ function LeadCard({ contact, hasPaidOrder, isDragging }: { contact: Contact; has
         <CardContent className="p-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <div className={`h-8 w-1 rounded-full shrink-0 ${hasPaidOrder ? "bg-success" : "bg-destructive"}`} />
+              <div className={`h-8 w-1 rounded-full shrink-0 ${hasPaidOrder ? "bg-success/60" : "bg-destructive/40"}`} />
               <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" {...listeners} />
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{contact.first_name} {contact.last_name}</p>
