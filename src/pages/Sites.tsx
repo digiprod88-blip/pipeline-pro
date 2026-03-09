@@ -26,6 +26,7 @@ export default function Sites() {
   const [editingPage, setEditingPage] = useState<any>(null);
   const [showAi, setShowAi] = useState(false);
   const [builderPageId, setBuilderPageId] = useState<string | null>(null);
+  const [useNestedBuilder, setUseNestedBuilder] = useState(true);
   const [form, setForm] = useState({ title: "", slug: "", description: "", meta_title: "", meta_description: "", template: "blank" });
 
   const { data: pages = [], isLoading } = useQuery({
