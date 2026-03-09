@@ -1558,26 +1558,32 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          disable_export: boolean
           hide_finance: boolean
           hide_phone: boolean
           id: string
           pipeline_access: string
+          read_only_funnel: boolean
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          disable_export?: boolean
           hide_finance?: boolean
           hide_phone?: boolean
           id?: string
           pipeline_access?: string
+          read_only_funnel?: boolean
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          disable_export?: boolean
           hide_finance?: boolean
           hide_phone?: boolean
           id?: string
           pipeline_access?: string
+          read_only_funnel?: boolean
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
