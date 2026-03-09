@@ -20,10 +20,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Upload, Trash2, Download } from "lucide-react";
+import { Plus, Search, Upload, Trash2, Download, ChevronDown, FileSpreadsheet, History } from "lucide-react";
 import { downloadCSV } from "@/lib/csvExport";
+import { exportLeadDetails, exportInteractionHistory, exportFullReport } from "@/lib/enhancedCsvExport";
 import { toast } from "sonner";
 import { AddContactDialog } from "@/components/contacts/AddContactDialog";
 import { format } from "date-fns";
