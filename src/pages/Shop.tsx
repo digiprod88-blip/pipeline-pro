@@ -147,7 +147,9 @@ export default function Shop() {
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{products?.length || 0}</p><p className="text-xs text-muted-foreground">Products</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{orders?.length || 0}</p><p className="text-xs text-muted-foreground">Total Orders</p></CardContent></Card>
         <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">{pendingOrders}</p><p className="text-xs text-muted-foreground">Pending</p></CardContent></Card>
-        <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">₹{totalRevenue.toLocaleString()}</p><p className="text-xs text-muted-foreground">Revenue</p></CardContent></Card>
+        {canViewFinance && (
+          <Card><CardContent className="p-4 text-center"><p className="text-2xl font-bold">₹{totalRevenue?.toLocaleString()}</p><p className="text-xs text-muted-foreground">Revenue</p></CardContent></Card>
+        )}
       </div>
 
       <Tabs defaultValue="products">
