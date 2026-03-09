@@ -26,8 +26,9 @@ export default function CalendarPage() {
   const [openSlots, setOpenSlots] = useState(false);
 
   const [apptForm, setApptForm] = useState({
-    title: "", description: "", start_time: "", end_time: "", location: "",
+    title: "", description: "", start_time: "", end_time: "", location: "", createZoom: false,
   });
+  const [isCreatingZoom, setIsCreatingZoom] = useState(false);
 
   const { data: appointments } = useQuery({
     queryKey: ["appointments"],
