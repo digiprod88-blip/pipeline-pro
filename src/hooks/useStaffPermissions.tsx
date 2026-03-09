@@ -6,12 +6,16 @@ interface StaffPermissions {
   role: string;
   hide_finance: boolean;
   hide_phone: boolean;
+  disable_export: boolean;
+  read_only_funnel: boolean;
   pipeline_access: string;
   isAdmin: boolean;
   isStaff: boolean;
   isClient: boolean;
   canViewFinance: boolean;
   canViewPhone: boolean;
+  canExport: boolean;
+  canEditFunnel: boolean;
 }
 
 export function useStaffPermissions(): StaffPermissions & { isLoading: boolean } {
@@ -34,26 +38,33 @@ export function useStaffPermissions(): StaffPermissions & { isLoading: boolean }
   const role = roleData?.role || "viewer";
   const hide_finance = roleData?.hide_finance || false;
   const hide_phone = roleData?.hide_phone || false;
+  const disable_export = (roleData as any)?.disable_export || false;
+  const read_only_funnel = (roleData as any)?.read_only_funnel || false;
   const pipeline_access = roleData?.pipeline_access || "full";
 
   const isAdmin = role === "admin";
   const isStaff = role === "staff" || role === "admin";
   const isClient = role === "client";
 
-  // Admins can always see everything
   const canViewFinance = isAdmin || !hide_finance;
   const canViewPhone = isAdmin || !hide_phone;
+  const canExport = isAdmin || !disable_export;
+  const canEditFunnel = isAdmin || !read_only_funnel;
 
   return {
     role,
     hide_finance,
     hide_phone,
+    disable_export,
+    read_only_funnel,
     pipeline_access,
     isAdmin,
     isStaff,
     isClient,
     canViewFinance,
     canViewPhone,
+    canExport,
+    canEditFunnel,
     isLoading,
   };
 }

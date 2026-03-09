@@ -11,24 +11,29 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import {
-  MessageCircle, Facebook, Instagram, Brain, Check, X, QrCode, Key, RefreshCw, ExternalLink,
+  MessageCircle, Facebook, Instagram, Brain, Check, X, QrCode, Key, ExternalLink, Radio,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const INTEGRATIONS_META = [
-  { id: "whatsapp", name: "WhatsApp Web", description: "Connect WhatsApp to send/receive messages directly from CRM", icon: MessageCircle },
-  { id: "facebook", name: "Facebook Pages", description: "Connect Facebook Lead Forms to capture leads automatically", icon: Facebook },
-  { id: "instagram", name: "Instagram", description: "Connect Instagram DMs and lead forms", icon: Instagram },
-  { id: "openai", name: "AI Assistant", description: "AI-powered content generation and smart responses (built-in)", icon: Brain },
+  { id: "whatsapp_web", name: "WhatsApp Web", description: "QR code based — for 1-to-1 chats with contacts", icon: MessageCircle, category: "whatsapp" },
+  { id: "whatsapp_waba", name: "WhatsApp WABA", description: "Business API — for bulk campaigns & automated messages", icon: Radio, category: "whatsapp" },
+  { id: "facebook", name: "Facebook Pages", description: "Connect Facebook Lead Forms to capture leads automatically", icon: Facebook, category: "social" },
+  { id: "instagram", name: "Instagram", description: "Connect Instagram DMs and lead forms", icon: Instagram, category: "social" },
+  { id: "openai", name: "AI Assistant", description: "AI-powered content generation and smart responses (built-in)", icon: Brain, category: "ai" },
 ];
 
 export function AppStoreIntegrations() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const [whatsappWebOpen, setWhatsappWebOpen] = useState(false);
+  const [wabaOpen, setWabaOpen] = useState(false);
   const [facebookOpen, setFacebookOpen] = useState(false);
   const [instagramOpen, setInstagramOpen] = useState(false);
   const [whatsappToken, setWhatsappToken] = useState("");
+  const [wabaToken, setWabaToken] = useState("");
+  const [wabaPhoneId, setWabaPhoneId] = useState("");
 
   const { data: connections } = useQuery({
     queryKey: ["integration-connections"],
@@ -70,13 +75,13 @@ export function AppStoreIntegrations() {
   const isConnected = (id: string) => connections?.[id]?.is_connected || false;
 
   const handleConnect = (id: string) => {
-    if (id === "whatsapp") setWhatsappOpen(true);
+    if (id === "whatsapp_web") setWhatsappWebOpen(true);
+    else if (id === "whatsapp_waba") setWabaOpen(true);
     else if (id === "facebook") setFacebookOpen(true);
     else if (id === "instagram") setInstagramOpen(true);
     else if (id === "openai") {
-      // AI is built-in via Lovable AI, just mark as connected
       upsertConnection.mutate({ integrationId: "openai", connected: true, config: { provider: "lovable-ai" } });
-      toast.success("AI Assistant activated! Built-in AI features are now enabled.");
+      toast.success("AI Assistant activated!");
     }
   };
 
@@ -85,75 +90,88 @@ export function AppStoreIntegrations() {
     toast.success("Disconnected successfully");
   };
 
-  const connectWhatsApp = () => {
-    if (!whatsappToken.trim()) { toast.error("Please enter your WhatsApp token"); return; }
-    upsertConnection.mutate({ integrationId: "whatsapp", connected: true, config: { token: whatsappToken } });
-    setWhatsappOpen(false);
-    setWhatsappToken("");
-    toast.success("WhatsApp connected!");
-  };
-
-  const connectFacebook = () => {
-    // Meta OAuth is not available in this platform - store as manual config
-    upsertConnection.mutate({ integrationId: "facebook", connected: true, config: { method: "webhook" } });
-    setFacebookOpen(false);
-    toast.success("Facebook connected! Configure webhook in Lead Mapping tab.");
-  };
-
-  const connectInstagram = () => {
-    upsertConnection.mutate({ integrationId: "instagram", connected: true, config: { method: "webhook" } });
-    setInstagramOpen(false);
-    toast.success("Instagram connected!");
-  };
-
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2">
-        {INTEGRATIONS_META.map((integration) => {
-          const Icon = integration.icon;
-          const connected = isConnected(integration.id);
-          return (
-            <Card key={integration.id} className="relative overflow-hidden">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${connected ? 'bg-primary/10' : 'bg-muted'}`}>
-                      <Icon className={`h-5 w-5 ${connected ? 'text-primary' : 'text-muted-foreground'}`} />
+      {/* WhatsApp Section */}
+      <div>
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">WhatsApp Connections</h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          {INTEGRATIONS_META.filter(i => i.category === "whatsapp").map((integration) => {
+            const Icon = integration.icon;
+            const connected = isConnected(integration.id);
+            return (
+              <Card key={integration.id} className="relative overflow-hidden">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${connected ? 'bg-primary/10' : 'bg-muted'}`}>
+                        <Icon className={`h-5 w-5 ${connected ? 'text-primary' : 'text-muted-foreground'}`} />
+                      </div>
+                      <div>
+                        <CardTitle className="text-sm font-medium">{integration.name}</CardTitle>
+                        {connected && <Badge variant="secondary" className="text-xs mt-1"><Check className="h-3 w-3 mr-1" />Connected</Badge>}
+                      </div>
                     </div>
-                    <div>
-                      <CardTitle className="text-sm font-medium">{integration.name}</CardTitle>
-                      {connected && (
-                        <Badge variant="secondary" className="text-xs mt-1">
-                          <Check className="h-3 w-3 mr-1" />
-                          Connected
-                        </Badge>
-                      )}
-                    </div>
+                    {connected && (
+                      <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive" onClick={() => handleDisconnect(integration.id)}>
+                        <X className="h-3 w-3 mr-1" /> Disconnect
+                      </Button>
+                    )}
                   </div>
-                  {connected && (
-                    <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive" onClick={() => handleDisconnect(integration.id)}>
-                      <X className="h-3 w-3 mr-1" /> Disconnect
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="text-xs text-muted-foreground mb-3">{integration.description}</p>
-                {!connected && (
-                  <Button size="sm" className="w-full" onClick={() => handleConnect(integration.id)}>Connect</Button>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <p className="text-xs text-muted-foreground mb-3">{integration.description}</p>
+                  {!connected && <Button size="sm" className="w-full" onClick={() => handleConnect(integration.id)}>Connect</Button>}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </div>
 
-      {/* WhatsApp Dialog */}
-      <Dialog open={whatsappOpen} onOpenChange={setWhatsappOpen}>
+      {/* Social & AI Section */}
+      <div>
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Social & AI</h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          {INTEGRATIONS_META.filter(i => i.category !== "whatsapp").map((integration) => {
+            const Icon = integration.icon;
+            const connected = isConnected(integration.id);
+            return (
+              <Card key={integration.id} className="relative overflow-hidden">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${connected ? 'bg-primary/10' : 'bg-muted'}`}>
+                        <Icon className={`h-5 w-5 ${connected ? 'text-primary' : 'text-muted-foreground'}`} />
+                      </div>
+                      <div>
+                        <CardTitle className="text-sm font-medium">{integration.name}</CardTitle>
+                        {connected && <Badge variant="secondary" className="text-xs mt-1"><Check className="h-3 w-3 mr-1" />Connected</Badge>}
+                      </div>
+                    </div>
+                    {connected && (
+                      <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive" onClick={() => handleDisconnect(integration.id)}>
+                        <X className="h-3 w-3 mr-1" /> Disconnect
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <p className="text-xs text-muted-foreground mb-3">{integration.description}</p>
+                  {!connected && <Button size="sm" className="w-full" onClick={() => handleConnect(integration.id)}>Connect</Button>}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* WhatsApp Web Dialog - QR Code */}
+      <Dialog open={whatsappWebOpen} onOpenChange={setWhatsappWebOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><MessageCircle className="h-5 w-5" />Connect WhatsApp</DialogTitle>
-            <DialogDescription>Scan QR code or enter API token</DialogDescription>
+            <DialogTitle className="flex items-center gap-2"><MessageCircle className="h-5 w-5" />Connect WhatsApp Web</DialogTitle>
+            <DialogDescription>For 1-to-1 conversations — scan QR or enter token</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="border border-dashed border-border rounded-lg p-8 flex flex-col items-center justify-center bg-muted/30">
@@ -165,16 +183,57 @@ export function AppStoreIntegrations() {
               <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Or use token</span></div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="wa-token">WhatsApp Business API Token</Label>
-              <Input id="wa-token" type="password" placeholder="Enter your WhatsApp token..." value={whatsappToken} onChange={(e) => setWhatsappToken(e.target.value)} />
-              <p className="text-xs text-muted-foreground">
-                Get your token from <a href="https://developers.facebook.com/docs/whatsapp" target="_blank" rel="noreferrer" className="text-primary hover:underline">Meta for Developers <ExternalLink className="h-3 w-3 inline" /></a>
-              </p>
+              <Label>WhatsApp Web Token</Label>
+              <Input type="password" placeholder="Enter your token..." value={whatsappToken} onChange={(e) => setWhatsappToken(e.target.value)} />
+            </div>
+            <div className="rounded-lg bg-warning/10 border border-warning/20 p-3">
+              <p className="text-xs text-warning font-medium">⚠️ WhatsApp Web is for personal chats only</p>
+              <p className="text-xs text-muted-foreground mt-1">Do NOT use this for bulk messages. Use WhatsApp WABA instead to avoid number bans.</p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setWhatsappOpen(false)}>Cancel</Button>
-            <Button onClick={connectWhatsApp}>Connect</Button>
+            <Button variant="outline" onClick={() => setWhatsappWebOpen(false)}>Cancel</Button>
+            <Button onClick={() => {
+              upsertConnection.mutate({ integrationId: "whatsapp_web", connected: true, config: { token: whatsappToken, type: "web" } });
+              setWhatsappWebOpen(false); setWhatsappToken("");
+              toast.success("WhatsApp Web connected!");
+            }}>Connect</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* WABA Dialog */}
+      <Dialog open={wabaOpen} onOpenChange={setWabaOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Radio className="h-5 w-5" />Connect WhatsApp WABA</DialogTitle>
+            <DialogDescription>Business API for bulk campaigns & automated messages</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>WABA Access Token</Label>
+              <Input type="password" placeholder="Enter WABA access token..." value={wabaToken} onChange={(e) => setWabaToken(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone Number ID</Label>
+              <Input placeholder="e.g. 1234567890" value={wabaPhoneId} onChange={(e) => setWabaPhoneId(e.target.value)} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Get these from <a href="https://developers.facebook.com/docs/whatsapp/cloud-api" target="_blank" rel="noreferrer" className="text-primary hover:underline">Meta Cloud API docs <ExternalLink className="h-3 w-3 inline" /></a>
+            </p>
+            <div className="rounded-lg bg-success/10 border border-success/20 p-3">
+              <p className="text-xs text-success font-medium">✓ WABA is safe for bulk messaging</p>
+              <p className="text-xs text-muted-foreground mt-1">Use this connection for workflow automations, webinar reminders, and campaign broadcasts.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWabaOpen(false)}>Cancel</Button>
+            <Button onClick={() => {
+              if (!wabaToken.trim()) { toast.error("Enter WABA token"); return; }
+              upsertConnection.mutate({ integrationId: "whatsapp_waba", connected: true, config: { token: wabaToken, phone_number_id: wabaPhoneId, type: "waba" } });
+              setWabaOpen(false); setWabaToken(""); setWabaPhoneId("");
+              toast.success("WhatsApp WABA connected!");
+            }}>Connect</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -190,12 +249,21 @@ export function AppStoreIntegrations() {
             <div className="border border-border rounded-lg p-4 bg-muted/30">
               <h4 className="text-sm font-medium mb-2">How it works:</h4>
               <ul className="text-xs text-muted-foreground space-y-1">
-                <li>1. Set up a webhook in your Meta developer account</li>
-                <li>2. Point it to your CRM webhook URL (see Lead Mapping tab)</li>
-                <li>3. Map lead form fields to CRM fields</li>
+                <li>1. Create a Facebook App at developers.facebook.com</li>
+                <li>2. Set up a webhook pointing to your CRM webhook URL</li>
+                <li>3. Subscribe to "leadgen" and "messages" events</li>
+                <li>4. Map lead form fields in the Lead Mapping tab</li>
               </ul>
             </div>
-            <Button className="w-full" onClick={connectFacebook}>
+            <div className="rounded-lg bg-info/10 border border-info/20 p-3">
+              <p className="text-xs text-info font-medium">ℹ️ Full OAuth requires Meta App credentials</p>
+              <p className="text-xs text-muted-foreground mt-1">Add your META_APP_ID and META_APP_SECRET in backend secrets to enable real-time lead & DM sync.</p>
+            </div>
+            <Button className="w-full" onClick={() => {
+              upsertConnection.mutate({ integrationId: "facebook", connected: true, config: { method: "webhook" } });
+              setFacebookOpen(false);
+              toast.success("Facebook connected! Configure webhook in Lead Mapping tab.");
+            }}>
               <Facebook className="h-4 w-4 mr-2" />Mark as Connected
             </Button>
           </div>
@@ -218,7 +286,11 @@ export function AppStoreIntegrations() {
                 <li>• Configure webhook in Lead Mapping</li>
               </ul>
             </div>
-            <Button className="w-full" onClick={connectInstagram}>
+            <Button className="w-full" onClick={() => {
+              upsertConnection.mutate({ integrationId: "instagram", connected: true, config: { method: "webhook" } });
+              setInstagramOpen(false);
+              toast.success("Instagram connected!");
+            }}>
               <Instagram className="h-4 w-4 mr-2" />Mark as Connected
             </Button>
           </div>
