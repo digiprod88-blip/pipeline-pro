@@ -156,6 +156,7 @@ export default function Shop() {
         <TabsList>
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
+          <TabsTrigger value="settings"><Settings className="h-4 w-4 mr-1" />Shop Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="products" className="mt-4">
