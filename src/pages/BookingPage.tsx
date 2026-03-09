@@ -141,9 +141,13 @@ export default function BookingPage() {
           notes: form.notes || null,
           start_time: startTime.toISOString(),
           end_time: endTime.toISOString(),
+          create_zoom: true,
         },
       });
       if (res.error) throw res.error;
+      if (res.data?.zoom_link) {
+        setZoomLink(res.data.zoom_link);
+      }
       setStep("done");
       toast.success("Appointment booked!");
     } catch (err: any) {
