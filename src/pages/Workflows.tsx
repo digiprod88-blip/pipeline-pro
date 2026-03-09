@@ -335,6 +335,20 @@ export default function Workflows() {
                 )}
               </div>
 
+              {/* WABA Warning for high-frequency messaging */}
+              {hasHighFrequencyRisk && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                  <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                  <div className="text-xs">
+                    <p className="font-semibold text-destructive">⚠️ Bulk Messaging Warning</p>
+                    <p className="text-muted-foreground mt-1">
+                      Sending WhatsApp messages to many leads simultaneously without a proper delay can get your personal number banned by WhatsApp. 
+                      Add a <strong>Wait</strong> step between messages or use a <strong>WhatsApp Business API (WABA)</strong> account for bulk messaging.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <Button className="w-full" onClick={() => createWorkflow.mutate()} disabled={!form.name || createWorkflow.isPending}>
                 Create Workflow
               </Button>
