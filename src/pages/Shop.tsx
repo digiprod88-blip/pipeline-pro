@@ -210,7 +210,11 @@ export default function Shop() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{order.currency === "INR" ? "₹" : "$"}{Number(order.amount).toLocaleString()}</span>
+                      {canViewFinance ? (
+                        <span className="font-medium text-sm">{order.currency === "INR" ? "₹" : "$"}{Number(order.amount).toLocaleString()}</span>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
                       <Badge variant={order.status === "paid" ? "success" : order.status === "pending" ? "warm" : "secondary"} className="capitalize text-xs">{order.status}</Badge>
                       <Button
                         variant="ghost"
