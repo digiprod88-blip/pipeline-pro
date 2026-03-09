@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { motion } from "framer-motion";
 import {
-  Users, DollarSign, TrendingUp, CheckSquare, AlertCircle, Clock, CheckCircle2,
+  Users, DollarSign, TrendingUp, CheckSquare, AlertCircle, Clock,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,8 +13,8 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 import HotLeadsWidget from "@/components/dashboard/HotLeadsWidget";
-import LeadScoreBadge from "@/components/dashboard/LeadScoreBadge";
-import TeamLeaderboard from "@/components/dashboard/TeamLeaderboard";
+import { ConversionFunnel } from "@/components/reports/ConversionFunnel";
+import { ROIDashboard } from "@/components/reports/ROIDashboard";
 
 function StatCard({ title, value, icon: Icon, description, delay = 0 }: {
   title: string; value: string | number; icon: React.ElementType; description?: string; delay?: number;
